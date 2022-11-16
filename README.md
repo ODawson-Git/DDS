@@ -7,9 +7,10 @@ Utility AutoHotKey script for Dungeon Defenders Awakened.
 **Ctrl+Del**: Kills the script
 **F8**: Reload the script.  
 **F9**: Auto G (only in build phase if not wave 1).
+**F10**: Auto repair 
+**F11**: Ability spam
 **Ctrl+F9**: Toggles between group G and solo G  
-**F10**: Auto fire.  
-**F11**:   Ability spam
+**Ctrl+RMB**: Auto fire.  
 - Monk - Spam tower boost,  
 - Apprentice - Hero boost & right click,   
 - Squire -

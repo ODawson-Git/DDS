@@ -1,11 +1,15 @@
 ;Download https://www.autohotkey.com/download/ahk-install.exe to use this script.
 ;Made by AFK on core#0614 - updated by Wurzle#7136 , message me on discord if you need anything or have suggestions!
-v:=221114 ;Script version, yearmonthday
+v:=221116 ;Script version, yearmonthday
 ;#####vvvSETTINGS#### 
 DEBUG:=0
 boostKeybind:="c"
 abilityKeybind:="f"
 dropManaKeybind:="m"
+repairTowerKeybind:="r"
+repairInterval:= 200 ;milliseconds
+repairDuration:= 700 ;milliseconds 
+;!!!! Total repairInterval + repairDuration <= 5400 for app boost <= 19400 for monk boost !!! 
 AutoFocusTheGame:=1
 GAtWarmUpPhase:=1
 PressSpaceOnLoading:=1
@@ -28,6 +32,8 @@ Loop{ ;Main Loop
 	global waitNextCombatPhase
 	global abilitySpamToggle
 	global abilityTimer
+	global repairSpamToggle
+	global repairTimer
 	global hero
 	global phase
 	global autoG
@@ -60,6 +66,8 @@ Loop{ ;Main Loop
 		waitNextCombatPhase := false
 		if(abilitySpamToggle){
 			AbilitySpam(hero)
+		}else if(repairSpamToggle){
+			RepairSpam()
 		}
 	}else if(phase == "loading"){
 		if(PressSpaceOnLoading){
@@ -76,11 +84,13 @@ Loop{ ;Main Loop
 	;
 	Gui()
 	;
-	sleepTime := 1000
+	sleepTime1 := 1000
 	if(abilitySpamToggle && phase == "combat" && A_TickCount+sleepTime > abilityTimer){ ;If the ability is to be used soon it will wait for a shorter amount of time
-		sleepTime := abilityTimer-A_TickCount
-	}	
-	Sleep, sleepTime
+		sleepTime2 := abilityTimer-A_TickCount
+	}else if(repairSpamToggle && phase == "combat" && A_TickCount+sleepTime > repairTimer){
+		sleepTime3 := repairTimer-A_TickCount
+	}
+	Sleep, Min(sleepTime1, sleepTime2, sleepTime3)
 }
 
 ; Keybinds
@@ -89,7 +99,8 @@ F9:: ActivateAutoG() ;F9 activates auto G
 ^Del:: ExitApp
 ^F9:: ToggleGroupG()
 #ifWinActive, ahk_exe DDS-Win64-Shipping.exe
-F10:: AutoFire() ;Auto attack depending on current hero
+F10:: ActivateAutoRepair()
+^RButton:: AutoFire() ;Auto attack depending on current hero
 F11:: ActivateAbilitySpam() ;AbilitySpam() ;Spam right click on apprentice or tower boost on Monk (make sure abilityKeybind [line 9] is set the correct key)
 ^!d:: ToggleDebug() ;Ctrl+Alt+D
 
@@ -298,6 +309,46 @@ AutoFire(){ ;Trigger normal attacks depending on class
 	}
 }
 
+ActivateAutoRepair(){ ;Repair in a given interval
+	global repairTowerKeybind
+	global repairInterval
+	global repairSpamToggle
+	global repairDuration
+	global repairInterval
+
+	repairSpamToggle:= !repairSpamToggle
+
+	if(repairSpamToggle){
+		Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W250,, Spam Repair (%repairTowerKeybind%) every %repairInterval%ms for %repairDuration%ms: ON
+		Sleep, 800
+		Progress, 10: OFF
+	}else{
+		Progress, 10:B zh0 fs18 CW272822 CTDC143C W190,, Spam Repair (%repairTowerKeybind%): OFF
+		Sleep, 500
+	}
+	Progress, 10: OFF
+}
+
+RepairSpam(){
+	global repairDuration
+	global repairInterval
+	global repairTowerKeybind
+	global repairTimer
+
+	if(abilitySpamToggle){
+		return
+	}
+
+	ControlSend,,{%repairTowerKeybind%}, ahk_exe DDS-Win64-Shipping.exe
+	Sleep, 100
+	ControlClick,, ahk_exe DDS-Win64-Shipping.exe
+	Sleep, repairDuration
+	ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,,
+
+	useEvery = repairInterval
+	repairTimer := A_TickCount + useEvery
+}
+
 ActivateAbilitySpam(){
 	global abilitySpamToggle
 	global abilityKeybind
@@ -305,25 +356,23 @@ ActivateAbilitySpam(){
 	abilitySpamToggle:= !abilitySpamToggle
 	Gui()
 	hero := CheckHeroColor()
-	
+
 	if(hero == "monk"){
 		if(abilitySpamToggle){
 			Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W215,, Spam Power Tower Boost (%abilityKeybind%): ON
-			AbilitySpam(hero)
-			Sleep, 400
+			Sleep, 500
 		}else{
 			Progress, 10:B zh0 fs18 CW272822 CTDC143C W190,, Spam Power Tower Boost: OFF
-			Sleep, 200
+			Sleep, 500
 		}
 		Progress, 10: OFF
 	}else if(hero == "apprentice"){
 		if(abilitySpamToggle){
 			Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W165,, Spam Rate Tower Boost: ON
-			AbilitySpam(hero)
-			Sleep, 400
+			Sleep, 500
 		}else{
 			Progress, 10:B zh0 fs18 CW272822 CTDC143C W170,, Spam Rate Tower Boost: OFF
-			Sleep, 200
+			Sleep, 500
 		}
 		Progress, 10: OFF	
 	}
@@ -335,31 +384,88 @@ AbilitySpam(hero){ ;Spam right click on apprentice, towerboost on monk
 	global boostKeybind
 	global abilityTimer
 	global abilitySpamToggle
+	global repairSpamToggle
+	global repairTowerKeybind
+	global repairDuration
+	global repairInterval
 
 	if(A_TickCount < abilityTimer){
 		return
 	}
 	
 	if(hero == "monk"){ ;Spam tower boost on monk
-		ControlSend,,{%abilityKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 		useEvery := 19500
+		totalRepairTime := 100 + repairDuration + repairInterval
+		enoughTime := useEvery-totalRepairTime >= 0
+		repairRepetitions := Floor(useEvery / totalRepairTime)
+
+		ControlSend,,{%abilityKeybind%}, ahk_exe DDS-Win64-Shipping.exe
+
+		if(repairSpamToggle && enoughTime){
+			Sleep, 800
+			Loop, %repairRepetitions%{
+				ControlSend,,{%repairTowerKeybind%}, ahk_exe DDS-Win64-Shipping.exe
+				Sleep, 100
+				ControlClick,, ahk_exe DDS-Win64-Shipping.exe
+				Sleep, repairDuration
+				ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,,
+				Sleep, repairInterval
+				if(!repairSpamToggle){
+					break
+				}
+
+			}
+			useEvery := 19500 - 800 - (repairRepetitions * totalRepairTime)
+		}else if(repairSpamToggle && !enoughTime){
+			Progress, 10:B zh0 fs18 CW272822 CTDC143C W260,, Not enough time to spam ability and repair
+			Sleep, 800
+			Progress, 10: OFF
+			Progress, 10:B zh0 fs18 CW272822 CTDC143C W260,, Disabling repair
+			Sleep, 800
+			repairSpamToggle := false
+			Progress, 10: OFF
+		}
 		abilityTimer := A_TickCount+useEvery
 	}
 	
 	if(hero == "apprentice"){ ;Spam tower boost on apprentice
-			ControlSend,,{%boostKeybind% down}, ahk_exe DDS-Win64-Shipping.exe
+		useEvery := 5500
+		totalRepairTime := 100 + repairDuration + repairInterval
+		enoughTime := useEvery-totalRepairTime >= 0
+		repairRepetitions := Floor(useEvery / totalRepairTime)
+
+		ControlSend,,{%boostKeybind%}, ahk_exe DDS-Win64-Shipping.exe
+		Sleep, 1200
+		ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,,D
+		Sleep, 150
+		ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,U
+		Sleep, 850
+		ControlSend,,{%boostKeybind%}, ahk_exe DDS-Win64-Shipping.exe
+
+		if(repairSpamToggle && enoughTime){
 			Sleep, 100
-			ControlSend,,{%boostKeybind% up}, ahk_exe DDS-Win64-Shipping.exe
-			Sleep, 1200
-			ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,,D
-			Sleep, 150
-			ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,U
-			Sleep, 850
-			ControlSend,,{%boostKeybind% down}, ahk_exe DDS-Win64-Shipping.exe
-			Sleep, 100
-			ControlSend,,{%boostKeybind% up}, ahk_exe DDS-Win64-Shipping.exe
-			useEvery := 5500
-			abilityTimer := A_TickCount+useEvery			
+			Loop, %repairRepetitions%{
+				ControlSend,,{%repairTowerKeybind%}, ahk_exe DDS-Win64-Shipping.exe
+				Sleep, 100
+				ControlClick,, ahk_exe DDS-Win64-Shipping.exe
+				Sleep, repairDuration
+				ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,,
+				Sleep, repairInterval
+				if(!repairSpamToggle){
+					break
+				}
+			}
+			useEvery := 5500 - 100 - (repairRepetitions * totalRepairTime)
+		}else if(repairSpamToggle && !enoughTime){
+			Progress, 10:B zh0 fs18 CW272822 CTDC143C W260,, Not enough time to spam ability and repair
+			Sleep, 800
+			Progress, 10: OFF
+			Progress, 10:B zh0 fs18 CW272822 CTDC143C W260,, Disabling repair
+			Sleep, 800
+			repairSpamToggle := false
+			Progress, 10: OFF
+		}
+		abilityTimer := A_TickCount+useEvery
 	}
 }
 
@@ -506,18 +612,18 @@ ToggleGroupG(){
 	if(groupG){
 		autoG := true
 		Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W215,, GroupG: ON
-	}else{
+	}else if(!groupG){
 		Progress, 10:B zh0 fs18 CW272822 CTDC143C W215,, GroupG: OFF
 	}
-	Sleep, 400
+	Sleep, 500
 	Progress, 10: OFF
 }
 
 ; #Script self-editing
 Update(){
 	t:=A_TickCount ;/add a number at the end of the URL to avoid caching issues
-	versionURL := "https://raw.githubusercontent.com/ODawson-Git/DDS/staging/lastVersionNumber?t="%t%
-	downloadURL:= "https://raw.githubusercontent.com/ODawson-Git/DDS/staging/DDS.ahk?t="%t%
+	versionURL := "https://raw.githubusercontent.com/ODawson-Git/DDS/main/lastVersionNumber?t="%t%
+	downloadURL:= "https://raw.githubusercontent.com/ODawson-Git/DDS/main/DDS.ahk?t="%t%
 	global v
 	ErrorLevel := 0
 	hObject:=ComObjCreate("WinHttp.WinHttpRequest.5.1") ;Create the Object
