@@ -1,16 +1,19 @@
 ;Download https://www.autohotkey.com/download/ahk-install.exe to use this script.
 ;Made by AFK on core#0614 - updated by Wurzle#7136 , message me on discord if you need anything or have suggestions!
-v:=221116 ;Script version, yearmonthday
+v:=221118 ;Script version, yearmonthday
 ;#####vvvSETTINGS#### 
 DEBUG:=0
+readColorInBackground:=0 ; 0 for off, 1 for Lexicos colour background checking
 boostKeybind:="c"
 abilityKeybind:="f"
 dropManaKeybind:="m"
 repairTowerKeybind:="r"
 repairInterval:= 200 ;milliseconds
-repairDuration:= 700 ;milliseconds 
-;!!!! Total repairInterval + repairDuration <= 5400 for app boost <= 19400 for monk boost !!! 
+repairDuration:= 1200 ;milliseconds 
+; readColorInBackground is off by default as broken for most users
+;!!!! Total repairInterval + repairDuration <= 5570 for app boost <= 19370 for monk boost !!! 
 AutoFocusTheGame:=1
+repairAtBuild=1
 GAtWarmUpPhase:=1
 PressSpaceOnLoading:=1
 DropManaAtBuildPhase:=0
@@ -34,6 +37,7 @@ Loop{ ;Main Loop
 	global abilityTimer
 	global repairSpamToggle
 	global repairTimer
+	global repairAtBuild
 	global hero
 	global phase
 	global autoG
@@ -49,6 +53,9 @@ Loop{ ;Main Loop
 			PopUp()
 		}	
 	}else if(phase == "build"){
+		if(repairSpamToggle && repairAtBuild){
+			RepairSpam()
+		}
 		if(DropManaAtBuildPhase){
 				ControlSend,,{%dropManaKeybind% down}, ahk_exe DDS-Win64-Shipping.exe
 				Sleep, 550
@@ -84,13 +91,15 @@ Loop{ ;Main Loop
 	;
 	Gui()
 	;
-	sleepTime1 := 1000
-	if(abilitySpamToggle && phase == "combat" && A_TickCount+sleepTime > abilityTimer){ ;If the ability is to be used soon it will wait for a shorter amount of time
+	sleepTime := 1000
+	sleepTime2 := 1000
+	sleepTime3 := 1000
+	if(abilitySpamToggle && (phase == "tavern" || phase == "combat") && A_TickCount+sleepTime > abilityTimer){ ;If the ability is to be used soon it will wait for a shorter amount of time
 		sleepTime2 := abilityTimer-A_TickCount
-	}else if(repairSpamToggle && phase == "combat" && A_TickCount+sleepTime > repairTimer){
+	}else if(repairSpamToggle && (phase == "tavern" || phase == "build" || phase == "combat") && A_TickCount+sleepTime > repairTimer){
 		sleepTime3 := repairTimer-A_TickCount
 	}
-	Sleep, Min(sleepTime1, sleepTime2, sleepTime3)
+	Sleep, Min(sleepTime, sleepTime2, sleepTime3)
 }
 
 ; Keybinds
@@ -107,6 +116,23 @@ F11:: ActivateAbilitySpam() ;AbilitySpam() ;Spam right click on apprentice or to
 Gui(){ ;Display a little status windows with a button to open settings
 	return ;Work in Progress
 } 
+
+PixelColorSimple(pc_x, pc_y){ ;Gets pixel color even if the window is in background ;Thanks to Lexikos https://github.com/Lexikos/AutoHotkey_L
+	global WinID
+	pc_wID:= WinID
+    if(pc_wID){
+        pc_hDC := DllCall("GetDC", "UInt", pc_wID)
+        pc_fmtI := A_FormatInteger
+        SetFormat, IntegerFast, Hex
+        pc_c := DllCall("GetPixel", "UInt", pc_hDC, "Int", pc_x, "Int", pc_y, "UInt")
+        pc_c := pc_c >> 16 & 0xff | pc_c & 0xff00 | (pc_c & 0xff) << 16
+        pc_c .= ""
+        SetFormat, IntegerFast, %pc_fmtI%
+        DllCall("ReleaseDC", "UInt", pc_wID, "UInt", pc_hDC)
+		pc_c := "0x" SubStr("000000" SubStr(pc_c, 3), -5)
+        return pc_c ;
+    }
+}
 
 ActivateAutoG(){
 	global autoG	
@@ -160,6 +186,7 @@ PopUp(){ ;Put the game in focus
 }
 
 CheckPhaseColor(){ ; Check the color of the ribbon behind Build Phase/Combat Phase
+	global readColorInBackground
 	global WinX
 	global WinY
 	global WinWidth
@@ -172,7 +199,11 @@ CheckPhaseColor(){ ; Check the color of the ribbon behind Build Phase/Combat Pha
 	Progress, 5:OFF
 	Progress, 6:OFF
 	
-	PixelGetColor, ColorCheck, phaseColorX, phaseColorY, RGB 
+	if(readColorInBackground){
+		ColorCheck := PixelColorSimple(phaseColorX, phaseColorY)
+	}else{
+		PixelGetColor, ColorCheck, phaseColorX, phaseColorY, RGB 
+	}
 	StringTrimLeft, ColorCheck, ColorCheck, 2
 	R := Format("{:u}", "0x"+SubStr(ColorCheck, 1, 2))
 	G := Format("{:u}", "0x"+SubStr(ColorCheck, 3, 2))
@@ -228,6 +259,7 @@ CheckPhaseColor(){ ; Check the color of the ribbon behind Build Phase/Combat Pha
 
 CheckHeroColor(){ ;Check the color of the background behind the hero's head icon
 	;/!\ TODO: Fix the weird bug with Windowed max res with DEBUG off
+	global readColorInBackground
 	global DEBUG
 	global WinX
 	global WinY
@@ -241,7 +273,11 @@ CheckHeroColor(){ ;Check the color of the background behind the hero's head icon
 	Progress, 2:OFF
 	Progress, 3:OFF
 	
-	PixelGetColor, ColorCheck, heroColorX, heroColorY, RGB 
+	if(readColorInBackground){	
+		ColorCheck := PixelColorSimple(heroColorX, heroColorY)
+	}else{
+		PixelGetColor, ColorCheck, heroColorX, heroColorY, RGB 
+	}
 	StringTrimLeft, ColorCheck, ColorCheck, 2
 	R := Format("{:u}", "0x"+SubStr(ColorCheck, 1, 2))
 	G := Format("{:u}", "0x"+SubStr(ColorCheck, 3, 2))
@@ -286,9 +322,14 @@ CheckHeroColor(){ ;Check the color of the background behind the hero's head icon
 		return "warden"
 	}else if(R>85 && R<93 && G>0 && G<10 && B>50 && B<60){
 		if(DEBUG){
-			Progress, B X%WinX% Y0 cw%ColorCheck% ZHn0,Warden (%R% %G% %B%)
+			Progress, B X%WinX% Y0 cw%ColorCheck% ZHn0,Rouge (%R% %G% %B%)
 		}
 		return "rouge"
+	}else if(R>45 && R<60 && G>45 && G<60 && B>80 && B<95){
+		if(DEBUG){
+			Progress, B X%WinX% Y0 cw%ColorCheck% ZHn0,Summoner (%R% %G% %B%)
+		}
+		return "summoner"
 	}else{
 		if(DEBUG){
 			Progress, B X%WinX% Y0 cw%ColorCheck% ZHn0,No color match (%R% %G% %B%)
@@ -334,18 +375,26 @@ RepairSpam(){
 	global repairInterval
 	global repairTowerKeybind
 	global repairTimer
+	global abilitySpamToggle
+	global repairAtBuild
 
-	if(abilitySpamToggle){
-		return
+	if(!repairAtBuild){
+		if(abilitySpamToggle){
+			return
+		}
 	}
 
+	if(A_TickCount < repairTimer){
+		return
+	}
+	
 	ControlSend,,{%repairTowerKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 	Sleep, 100
 	ControlClick,, ahk_exe DDS-Win64-Shipping.exe
 	Sleep, repairDuration
 	ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,,
 
-	useEvery = repairInterval
+	useEvery := repairInterval
 	repairTimer := A_TickCount + useEvery
 }
 
@@ -392,17 +441,19 @@ AbilitySpam(hero){ ;Spam right click on apprentice, towerboost on monk
 	if(A_TickCount < abilityTimer){
 		return
 	}
+
+	totalRepairTime := 100 + repairDuration + repairInterval + 30
 	
 	if(hero == "monk"){ ;Spam tower boost on monk
 		useEvery := 19500
-		totalRepairTime := 100 + repairDuration + repairInterval
 		enoughTime := useEvery-totalRepairTime >= 0
 		repairRepetitions := Floor(useEvery / totalRepairTime)
+		loops := repairRepetitions
 
 		ControlSend,,{%abilityKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 
 		if(repairSpamToggle && enoughTime){
-			Sleep, 800
+			Sleep, 500
 			Loop, %repairRepetitions%{
 				ControlSend,,{%repairTowerKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 				Sleep, 100
@@ -411,11 +462,12 @@ AbilitySpam(hero){ ;Spam right click on apprentice, towerboost on monk
 				ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,,
 				Sleep, repairInterval
 				if(!repairSpamToggle){
+					loops := A_Index
 					break
 				}
 
 			}
-			useEvery := 19500 - 800 - (repairRepetitions * totalRepairTime)
+			useEvery := 19500 - 500 - (Min(loops, repairRepetitions) * totalRepairTime)
 		}else if(repairSpamToggle && !enoughTime){
 			Progress, 10:B zh0 fs18 CW272822 CTDC143C W260,, Not enough time to spam ability and repair
 			Sleep, 800
@@ -429,10 +481,10 @@ AbilitySpam(hero){ ;Spam right click on apprentice, towerboost on monk
 	}
 	
 	if(hero == "apprentice"){ ;Spam tower boost on apprentice
-		useEvery := 5500
-		totalRepairTime := 100 + repairDuration + repairInterval
+		useEvery := 5700
 		enoughTime := useEvery-totalRepairTime >= 0
 		repairRepetitions := Floor(useEvery / totalRepairTime)
+		loops := repairRepetitions
 
 		ControlSend,,{%boostKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 		Sleep, 1200
@@ -452,10 +504,11 @@ AbilitySpam(hero){ ;Spam right click on apprentice, towerboost on monk
 				ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,,
 				Sleep, repairInterval
 				if(!repairSpamToggle){
+					loops := A_Index
 					break
 				}
 			}
-			useEvery := 5500 - 100 - (repairRepetitions * totalRepairTime)
+			useEvery := 5700 - 100 - (Min(loops, repairRepetitions) * totalRepairTime)
 		}else if(repairSpamToggle && !enoughTime){
 			Progress, 10:B zh0 fs18 CW272822 CTDC143C W260,, Not enough time to spam ability and repair
 			Sleep, 800

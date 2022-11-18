@@ -1,3 +1,8 @@
+221118:
+- Added summoner support (not sure what to automate yet)
+- Re-added readColorInBackground but made default 0 as apparently worked for some people
+- Tuned auto repair function (little buggy need to remove loop and re-pressing of r but can't think how - maybe detection of repair wrench could be useful)|
+
 221116:
 - Added configurable auto repair function|
 
