@@ -11,7 +11,7 @@ boostKeybind:="c"
 abilityKeybind:="f"
 dropManaKeybind:="m"
 repairTowerKeybind:="r"
-repairInterval:=100 ;milliseconds (how often to check for something to repair)
+repairInterval:=100 ;milliseconds how often to repair
 AutoFocusTheGame:=1
 repairAtBuildPhase=0
 GAtWarmUpPhase:=1
@@ -509,7 +509,10 @@ ActivateAutoRepair(){ ;Repair in a given interval
 		Progress, 10: OFF
 	}else{
 		Progress, 10:B zh0 fs18 CW272822 CTDC143C W190,, Spam Repair (%repairTowerKeybind%): OFF
-		ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,,
+		wrench := CheckRepairColor()
+		if(wrench == "redwrench" || wrench == "greenwrench"){
+			ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,,
+		}
 		Sleep, 500
 	}
 	Progress, 10: OFF
@@ -531,6 +534,11 @@ RepairSpam(wrench){
 
 	if(wrench == "greenwrench"){
 		ControlClick,, ahk_exe DDS-Win64-Shipping.exe
+		Sleep, repairInterval
+		wrench := CheckRepairColor()
+		if(wrench == "greenwrench"){
+			ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,,
+		}
 	}
 
 	if(wrench == "redwrench"){
