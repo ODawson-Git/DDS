@@ -1,6 +1,6 @@
 ;Download https://www.autohotkey.com/download/ahk-install.exe to use this script.
 ;Made by AFK on core#0614 - updated by Wurzle#7136 , message me on discord if you need anything or have suggestions!
-v:=221122 ;Script version, yearmonthday
+v:=221123 ;Script version, yearmonthday
 
 
 
@@ -775,6 +775,7 @@ AbilitySpam(hero, wrench){ ;Spam right click on apprentice, towerboost on monk
 	
 	if(hero == "apprentice"){ ;Spam tower boost on apprentice
 		useEvery := 5700
+		abilityAnimationTime := 1000
 
 		ControlSend,,{%boostKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 		Sleep, 1200
