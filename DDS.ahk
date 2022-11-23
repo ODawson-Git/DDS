@@ -11,7 +11,7 @@ boostKeybind:="c"
 abilityKeybind:="f"
 dropManaKeybind:="m"
 repairTowerKeybind:="r"
-repairInterval:=100 ;milliseconds how often to repair
+repairInterval:=100 ;milliseconds (how often to check for something to repair)
 AutoFocusTheGame:=1
 repairAtBuildPhase=0
 GAtWarmUpPhase:=1
@@ -771,7 +771,7 @@ AbilitySpam(hero, wrench){ ;Spam right click on apprentice, towerboost on monk
 	
 	if(hero == "monk"){ ;Spam tower boost on monk
 		useEvery := 19500
-		abilityAnimationTime := 100
+		abilityAnimationTime := 500
 
 		ControlSend,,{%abilityKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 
