@@ -1,6 +1,6 @@
 ;Download https://www.autohotkey.com/download/ahk-install.exe to use this script.
 ;Made by AFK on core#0614 - updated by Wurzle#7136 , message me on discord if you need anything or have suggestions!
-v:=221124 ;Script version, yearmonthday
+v:=221127 ;Script version, yearmonthday
 
 
 
@@ -19,7 +19,7 @@ PressSpaceOnLoading:=1
 DropManaAtBuildPhase:=0
 offline:=false ;stops checking for updates
 ;all of these ability durations are how long to use the ability for (would depend on your mana regen) in milliseconds, you need to have enough mana in a cycle to use ability if using both
-monkBoostAbilityDuration:=20000 
+monkBoostAbilityDuration:=20000
 summonerBoostAbilityDuration:=20000 
 wardenBoostAbilityDuration:=20000 
 squireBoostAbilityDuration:=20000
@@ -84,11 +84,6 @@ Loop{ ;Main Loop
 				G() ;Press G, works even if DDA is in background
 			}else if(AutoFocusTheGame){
 				PopUp() ;Will put the game in front at build phase if you tab out without activating autoG
-			}else if(!autoG){
-				if(boostAbilityUsed == 1 && boostAbilitySpamToggle){ ;if youre not pressing G instantly, disable boost until combat to save mana
-					ControlSend,,{%boostKeybind%}, ahk_exe DDS-Win64-Shipping.exe
-					boostAbilityUsed := 0
-				}
 			}
 			waitNextCombatPhase := true	
 		}	
@@ -621,7 +616,7 @@ BoostAbilitySpam(hero, wrench){
 
 	if(hero == "monk"){ ;Spam tower boost on monk
 		boostAnimationTime := 0
-		useEvery := 5000
+		useEvery := 5250
 
 		ControlSend,,{%boostKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 
@@ -641,7 +636,7 @@ BoostAbilitySpam(hero, wrench){
 
 	if(hero == "summoner"){ 
 		boostAnimationTime := 2000
-		useEvery := 5000
+		useEvery := 5250
 
 		ControlSend,,{%boostKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 
@@ -661,7 +656,7 @@ BoostAbilitySpam(hero, wrench){
 
 	if(hero == "warden"){ 
 		boostAnimationTime := 1500
-		useEvery := 5000
+		useEvery := 5250
 
 		ControlSend,,{%boostKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 
@@ -682,7 +677,7 @@ BoostAbilitySpam(hero, wrench){
 	if(hero == "squire"){
 		boostAnimationTime := 1250
 		abilityAnimationTime := 1000
-		useEvery := 5000
+		useEvery := 5250
 
 		ControlSend,,{%boostKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 
@@ -771,7 +766,7 @@ AbilitySpam(hero, wrench){ ;Spam right click on apprentice, towerboost on monk
 	
 	if(hero == "monk"){ ;Spam tower boost on monk
 		useEvery := 19500
-		abilityAnimationTime := 500
+		abilityAnimationTime := 550
 
 		ControlSend,,{%abilityKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 
@@ -783,7 +778,7 @@ AbilitySpam(hero, wrench){ ;Spam right click on apprentice, towerboost on monk
 	
 	if(hero == "apprentice"){ ;Spam tower boost on apprentice
 		useEvery := 5700
-		abilityAnimationTime := 1000
+		abilityAnimationTime := 650
 
 		ControlSend,,{%boostKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 		Sleep, 1200
