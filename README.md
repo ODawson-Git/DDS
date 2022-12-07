@@ -3,6 +3,13 @@
 # AFK on core's toolkit  
 Utility AutoHotKey script for Dungeon Defenders Awakened.  
 <sub>The script reads colors on screen to know current game phase and hero being played, tell me your screen resolution if you're having issues. Only support main monitor for now on multiple monitors setups.</sub>
+
+## Usage
+Requires [AutoHotKey](https://www.autohotkey.com/download/ahk-install.exe) to run. Simply open DDS.ahk the script, it will generate a config file. Open DDA and reload the script if required 
+
+<sub>In the config all timings are in milliseconds and changes only take effect when the script is reloaded</sub>
+
+
 ## Keybinds
 **Ctrl+Del**: Kills the script
 
@@ -26,7 +33,7 @@ Utility AutoHotKey script for Dungeon Defenders Awakened.
 - Warden - 
 - Summoner - Spam heal tower
 
-<sub>Ability Spam cooldowns are customizable in the settings from line 7 in DDS.ahk</sub>
+<sub>Ability Spam cooldowns are customizable in the config</sub>
 
 **Ctrl+F11**: Boost spam
 - Monk - Hero boost
@@ -38,7 +45,7 @@ Utility AutoHotKey script for Dungeon Defenders Awakened.
 - Warden - Wrath
 - Summoner - Pet boost
 
-<sub>Boost Spam durations are customizable in the settings from line 7 in DDS.ahk</sub>
+<sub>Boost Spam durations are customizable in the config</sub>
 
 
 <sub>**Note:** Updated by Wurzle#7136 for parity for current update, I have not been able to play the game much so feedback is appreciated - feel free to message</sub>

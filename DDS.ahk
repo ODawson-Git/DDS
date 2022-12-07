@@ -1,41 +1,9 @@
 ;Download https://www.autohotkey.com/download/ahk-install.exe to use this script.
 ;Made by AFK on core#0614 - updated by Wurzle#7136 , message me on discord if you need anything or have suggestions!
-v:=221207 ;Script version, yearmonthday
 
-
-
-;#####vvvSETTINGS#### 
-DEBUG:=0
-readColorInBackground:=0 ; 0 for off, 1 for Lexicos colour background checking off by default as broken for most users
-boostKeybind:="c"
-abilityKeybind:="f"
-dropManaKeybind:="m"
-repairTowerKeybind:="r"
-repairInterval:=100 ;milliseconds (how often to check for something to repair and max repair interval)
-AutoFocusTheGame:=1
-repairAtBuildPhase=0
-GAtWarmUpPhase:=1
-PressSpaceOnLoading:=1
-DropManaAtBuildPhase:=0
-offline:=false ;stops checking for updates
-; All of these ability durations are how long to use the ability for (would depend on your mana regen), in milliseconds
-; Ability cannot end during the duration!
-monkBoostAbilityDuration:=20000
-summonerBoostAbilityDuration:=20000
-wardenBoostAbilityDuration:=20000 
-squireBoostAbilityDuration:=20000
-; All of these cooldowns are dependent on your ability using value in spellbook, in milliseconds
-squireAbilityCooldown:=6700
-;####^^^SETTINGS#### 
-
-
-
-; If you're having issues turn on DEBGUG:=1 (or use Ctrl+Alt+D) to check what the script is reading and if coordinates are correct.
 #SingleInstance Force
 CoordMode, Pixel, Screen
 CoordMode, Mouse, Screen ;Change coordinate to be relative to the screen and not the current active window
-autoG:=false
-groupG:=false
 Setup() ;Get game resolution and calculate various X/Y coordinates
 if(!DEBUG){
 	Progress, B Y0 ZH0 CW272822 CT60D9EF,Welcome to AFK on core's toolkit!
@@ -47,15 +15,14 @@ Loop{ ;Main Loop
 	global waitNextCombatPhase
 	global abilitySpamToggle
 	global abilityTimer
-	global boostAbilitySpamToggle
-	global boostAbilityTimer
-	global boostAbilityUsed
+	global boostSpamToggle
+	global boostTimer
 	global abilityAnimationTime
 	global boostAnimationTime
 	global repairSpamToggle
 	global repairTimer
-	global repairAtBuildPhase
-	global repairInterval
+	global RepairAtBuildPhase
+	global CheckRepairTime
 	global hero
 	global phase
 	global autoG
@@ -72,7 +39,7 @@ Loop{ ;Main Loop
 			PopUp()
 		}	
 	}else if(phase == "build"){
-		if(repairSpamToggle && repairAtBuildPhase){
+		if(repairSpamToggle && RepairAtBuildPhase){
 			RepairSpam(wrench)
 		}
 		if(DropManaAtBuildPhase){
@@ -90,34 +57,34 @@ Loop{ ;Main Loop
 		}	
 	}else if(phase == "combat" || phase == "tavern" || phase == "boss"){	
 		waitNextCombatPhase := false
-		if(abilitySpamToggle && boostAbilitySpamToggle && repairSpamToggle){
-			if(abilityTimer-A_TickCount > repairInterval && boostAbilityTimer-A_TickCount > repairInterval){
+		if(abilitySpamToggle && boostSpamToggle && repairSpamToggle){
+			if(abilityTimer-A_TickCount > CheckRepairTime && boostTimer-A_TickCount > CheckRepairTime){
 				RepairSpam(wrench) ;if time before using ability(s) is sufficient, repair
 			}else{
-				BoostAbilitySpam(hero, wrench)
+				BoostSpam(hero, wrench)
 				wrench := CheckRepairColor() ;wrench may have changed
 				AbilitySpam(hero, wrench)
 			}
 		}else if(abilitySpamToggle && repairSpamToggle){
-			if(abilityTimer-A_TickCount > repairInterval){
+			if(abilityTimer-A_TickCount > CheckRepairTime){
 				RepairSpam(wrench)
 			}else{
 				AbilitySpam(hero, wrench)
 			}
-		}else if(boostAbilitySpamToggle && repairSpamToggle){
-			if(boostAbilityTimer-A_TickCount > repairInterval){
+		}else if(boostSpamToggle && repairSpamToggle){
+			if(boostTimer-A_TickCount > CheckRepairTime){
 				RepairSpam(wrench)
 			}else{
-				BoostAbilitySpam(hero, wrench)
+				BoostSpam(hero, wrench)
 			}
-		}else if(abilitySpamToggle && boostAbilitySpamToggle){
-			BoostAbilitySpam(hero, wrench)
+		}else if(abilitySpamToggle && boostSpamToggle){
+			BoostSpam(hero, wrench)
 			wrench := CheckRepairColor() ;wrench may have changed
 			AbilitySpam(hero, wrench)
 		}else if(abilitySpamToggle){
 			AbilitySpam(hero, wrench)
-		}else if(boostAbilitySpamToggle){
-			BoostAbilitySpam(hero, wrench)
+		}else if(boostSpamToggle){
+			BoostSpam(hero, wrench)
 		}else if(repairSpamToggle){
 			RepairSpam(wrench)
 		}
@@ -141,8 +108,8 @@ Loop{ ;Main Loop
 		sleepTime2 := abilityTimer-A_TickCount
 	}else if(repairSpamToggle && (phase == "tavern" || phase == "build" || phase == "combat") && A_TickCount+sleepTime > repairTimer){
 		sleepTime3 := repairTimer-A_TickCount
-	}else if(boostAbilitySpamToggle && (phase == "tavern" || phase == "build" || phase == "combat") && A_TickCount+sleepTime > boostAbilityTimer){
-		sleepTime4 := boostAbilityTimer-A_TickCount
+	}else if(boostSpamToggle && (phase == "tavern" || phase == "build" || phase == "combat") && A_TickCount+sleepTime > boostTimer){
+		sleepTime4 := boostTimer-A_TickCount
 	}
 	
 	Sleep, Min(sleepTime, sleepTime2, sleepTime3, sleepTime4)
@@ -151,31 +118,14 @@ Loop{ ;Main Loop
 ; Keybinds
 F8:: Reload ;Restart fresh, use it to stop AbilitySpam
 F9:: ActivateAutoG() ;F9 activates auto G
-^Del:: ExitApp
+^Del:: Exitapp
 ^F9:: ToggleGroupG()
 #ifWinActive, ahk_exe DDS-Win64-Shipping.exe
 F10:: ActivateAutoRepair()
 ^RButton:: AutoFire() ;Auto attack depending on current hero
 F11:: ActivateAbilitySpam() ;AbilitySpam() ;Spam right click on apprentice or tower boost on Monk (make sure abilityKeybind [line 9] is set the correct key)
-^F11:: ActivateBoostAbilitySpam()
+^F11:: ActivateBoostSpam()
 ^!d:: ToggleDebug() ;Ctrl+Alt+D
-
-PixelColorSimple(pc_x, pc_y){ ;Gets pixel color even if the window is in background ;Thanks to Lexikos https://github.com/Lexikos/AutoHotkey_L
-	global WinID
-	pc_wID:= WinID
-    if(pc_wID){
-        pc_hDC := DllCall("GetDC", "UInt", pc_wID)
-        pc_fmtI := A_FormatInteger
-        SetFormat, IntegerFast, Hex
-        pc_c := DllCall("GetPixel", "UInt", pc_hDC, "Int", pc_x, "Int", pc_y, "UInt")
-        pc_c := pc_c >> 16 & 0xff | pc_c & 0xff00 | (pc_c & 0xff) << 16
-        pc_c .= ""
-        SetFormat, IntegerFast, %pc_fmtI%
-        DllCall("ReleaseDC", "UInt", pc_wID, "UInt", pc_hDC)
-	        pc_c := "0x" SubStr("000000" SubStr(pc_c, 3), -5)
-        return pc_c ;
-    }
-}
 
 ActivateAutoG(){
 	global autoG	
@@ -241,7 +191,6 @@ PopUp(){ ;Put the game in focus
 }
 
 CheckPhaseColor(){ ; Check the color of the ribbon behind Build Phase/Combat Phase
-	global readColorInBackground
 	global WinX
 	global WinY
 	global WinWidth
@@ -254,11 +203,7 @@ CheckPhaseColor(){ ; Check the color of the ribbon behind Build Phase/Combat Pha
 	Progress, 5:OFF
 	Progress, 6:OFF
 	
-	if(readColorInBackground){
-		ColorCheck := PixelColorSimple(phaseColorX, phaseColorY)
-	}else{
-		PixelGetColor, ColorCheck, phaseColorX, phaseColorY, RGB 
-	}
+	PixelGetColor, ColorCheck, phaseColorX, phaseColorY, RGB 
 	StringTrimLeft, ColorCheck, ColorCheck, 2
 	R := Format("{:u}", "0x"+SubStr(ColorCheck, 1, 2))
 	G := Format("{:u}", "0x"+SubStr(ColorCheck, 3, 2))
@@ -314,7 +259,6 @@ CheckPhaseColor(){ ; Check the color of the ribbon behind Build Phase/Combat Pha
 
 CheckHeroColor(){ ;Check the color of the background behind the hero's head icon
 	;/!\ TODO: Fix the weird bug with Windowed max res with DEBUG off
-	global readColorInBackground
 	global DEBUG
 	global WinX
 	global WinY
@@ -327,12 +271,8 @@ CheckHeroColor(){ ;Check the color of the background behind the hero's head icon
 	Progress, OFF
 	Progress, 2:OFF
 	Progress, 3:OFF
-	
-	if(readColorInBackground){	
-		ColorCheck := PixelColorSimple(heroColorX, heroColorY)
-	}else{
-		PixelGetColor, ColorCheck, heroColorX, heroColorY, RGB 
-	}
+
+	PixelGetColor, ColorCheck, heroColorX, heroColorY, RGB 
 	StringTrimLeft, ColorCheck, ColorCheck, 2
 	R := Format("{:u}", "0x"+SubStr(ColorCheck, 1, 2))
 	G := Format("{:u}", "0x"+SubStr(ColorCheck, 3, 2))
@@ -394,7 +334,6 @@ CheckHeroColor(){ ;Check the color of the background behind the hero's head icon
 }
 
 CheckRepairColor(){
-	global readColorInBackground
 	global DEBUG
 	global WinX
 	global WinY
@@ -410,14 +349,9 @@ CheckRepairColor(){
 	Progress, 8:OFF
 	Progress, 9:OFF
 	Progress, 10:OFF
-	
-	if(readColorInBackground){	
-		ColorCheck1 := PixelColorSimple(repairColorX1, repairColorY1)
-		ColorCheck2 := PixelColorSimple(repairColorX2, repairColorY2)
-	}else{
-		PixelGetColor, ColorCheck1, repairColorX1, repairColorY1, RGB
-		PixelGetColor, ColorCheck2, repairColorX2, repairColorY2, RGB 
-	}
+
+	PixelGetColor, ColorCheck1, repairColorX1, repairColorY1, RGB
+	PixelGetColor, ColorCheck2, repairColorX2, repairColorY2, RGB 
 	StringTrimLeft, ColorCheck1, ColorCheck1, 2
 	R1 := Format("{:u}", "0x"+SubStr(ColorCheck1, 1, 2))
 	G1 := Format("{:u}", "0x"+SubStr(ColorCheck1, 3, 2))
@@ -492,20 +426,20 @@ AutoFire(){ ;Trigger normal attacks depending on class
 }
 
 ActivateAutoRepair(){ ;Repair in a given interval
-	global repairTowerKeybind
-	global repairInterval
+	global repairKeybind
+	global CheckRepairTime
 	global repairSpamToggle
 	global repairDuration
-	global repairInterval
+	global CheckRepairTime
 
 	repairSpamToggle:= !repairSpamToggle
 
 	if(repairSpamToggle){
-		Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W230,, Spam Repair (%repairTowerKeybind%) every %repairInterval%: ON
+		Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W230,, Spam Repair (%repairKeybind%) every %CheckRepairTime%: ON
 		Sleep, 800
 		Progress, 10: OFF
 	}else{
-		Progress, 10:B zh0 fs18 CW272822 CTDC143C W190,, Spam Repair (%repairTowerKeybind%): OFF
+		Progress, 10:B zh0 fs18 CW272822 CTDC143C W190,, Spam Repair (%repairKeybind%): OFF
 		wrench := CheckRepairColor()
 		if(wrench == "redwrench" || wrench == "greenwrench"){
 			ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,,
@@ -516,8 +450,8 @@ ActivateAutoRepair(){ ;Repair in a given interval
 }
 
 RepairSpam(wrench){
-	global repairInterval
-	global repairTowerKeybind
+	global CheckRepairTime
+	global repairKeybind
 	global repairTimer
 	global abilitySpamToggle
 
@@ -526,12 +460,12 @@ RepairSpam(wrench){
 	}
 	
 	if(wrench == "nowrench"){
-		ControlSend,,{%repairTowerKeybind%}, ahk_exe DDS-Win64-Shipping.exe
+		ControlSend,,{%repairKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 	}
 
 	if(wrench == "greenwrench"){
 		ControlClick,, ahk_exe DDS-Win64-Shipping.exe
-		Sleep, repairInterval
+		Sleep, CheckRepairTime
 		wrench := CheckRepairColor()
 		if(wrench == "greenwrench"){
 			ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,,
@@ -542,20 +476,20 @@ RepairSpam(wrench){
 			return
 	}
 
-	useEvery := repairInterval
+	useEvery := CheckRepairTime
 	repairTimer := A_TickCount + useEvery
 }
 
-ActivateBoostAbilitySpam(){
-	global boostAbilitySpamToggle
+ActivateBoostSpam(){
+	global boostSpamToggle
 	global abilityKeybind
 	global boostKeybind
 
-	boostAbilitySpamToggle:= !boostAbilitySpamToggle
+	boostSpamToggle:= !boostSpamToggle
 	hero := CheckHeroColor()
 
 	if(hero == "monk"){
-		if(boostAbilitySpamToggle){
+		if(boostSpamToggle){
 			Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W215,, Spam Hero Boost (%boostKeybind%): ON
 			Sleep, 500
 		}else{
@@ -564,7 +498,7 @@ ActivateBoostAbilitySpam(){
 		}
 		Progress, 10: OFF
 	}else if(hero == "summoner"){
-		if(boostAbilitySpamToggle){
+		if(boostSpamToggle){
 			Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W185,, Spam Pet Boost (%boostKeybind%): ON
 			Sleep, 500
 		}else{
@@ -573,7 +507,7 @@ ActivateBoostAbilitySpam(){
 		}
 		Progress, 10: OFF	
 	}else if(hero == "warden"){
-		if(boostAbilitySpamToggle){
+		if(boostSpamToggle){
 			Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W185,, Spam Wrath (%boostKeybind%): ON
 			Sleep, 500
 		}else{
@@ -582,7 +516,7 @@ ActivateBoostAbilitySpam(){
 		}
 		Progress, 10: OFF	
 	}else if(hero == "squire"){
-		if(boostAbilitySpamToggle){
+		if(boostSpamToggle){
 			Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W160,, Spam Blood Boil (%boostKeybind%): ON
 			Sleep, 500
 		}else{
@@ -593,22 +527,22 @@ ActivateBoostAbilitySpam(){
 	}
 }
 
-BoostAbilitySpam(hero, wrench){
+BoostSpam(hero, wrench){
 	global DEBUG
 	global abilityKeybind
 	global boostKeybind
-	global boostAbilityTimer
+	global boostTimer
 	global repairSpamToggle
 	global abilitySpamToggle
-	global boostAbilityUsed
-	global monkBoostAbilityDuration
-	global summonerBoostAbilityDuration
-	global wardenBoostAbilityDuration
-	global squireBoostAbilityDuration
+	global boostUsed
+	global monkBoostDuration
+	global summonerBoostDuration
+	global wardenBoostDuration
+	global squireBoostDuration
 	global abilityAnimationTime
 	global boostAnimationTime
 
-	if(A_TickCount < boostAbilityTimer){
+	if(A_TickCount < boostTimer){
 		return
 	}
 
@@ -618,39 +552,39 @@ BoostAbilitySpam(hero, wrench){
 
 	if(hero == "monk"){ ;Spam tower boost on monk
 		boostAnimationTime := 1
-		boostAbilityDuration := monkBoostAbilityDuration
+		boostDuration := monkBoostDuration
 		useEvery := 5000
 	}
 
 	if(hero == "summoner"){ 
 		boostAnimationTime := 2000
-		boostAbilityDuration := summonerBoostAbilityDuration
+		boostDuration := summonerBoostDuration
 		useEvery := 5000
 	}
 
 	if(hero == "warden"){ 
 		boostAnimationTime := 1500
-		boostAbilityDuration := wardenBoostAbilityDuration
+		boostDuration := wardenBoostDuration
 		useEvery := 5000
 	}
 
 	if(hero == "squire"){
 		boostAnimationTime := 1250
-		boostAbilityDuration := squireBoostAbilityDuration
+		boostDuration := squireBoostDuration
 		useEvery := 5000
 	}
 
-	if(hero != "none"){
-		boostAbilityUsed += 1
+	if(hero == "monk" || hero == "summoner" || hero == "warden" || hero == "squire"){
+		boostUsed += 1
 
 		ControlSend,,{%boostKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 
-		if(boostAbilityUsed == 1){
+		if(boostUsed == 1){
 			Sleep, boostAnimationTime
-			boostAbilityTimer := A_TickCount+boostAbilityDuration ;first time will enable for boost duration
-		}else if(boostAbilityUsed == 2){
-			boostAbilityTimer := A_TickCount+useEvery ;second time will disable for boost cooldown and wait till cooldown off
-			boostAbilityUsed := 0
+			boostTimer := A_TickCount+boostDuration ;first time will enable for boost duration
+		}else if(boostUsed == 2){
+			boostTimer := A_TickCount+useEvery ;second time will disable for boost cooldown and wait till cooldown off
+			boostUsed := 0
 		}
 	}
 }
@@ -764,7 +698,7 @@ AbilitySpam(hero, wrench){ ;Spam right click on apprentice, towerboost on monk
 		abilityAnimationTime := 1000
 	}
 
-	if(hero != "none" && hero != "apprentice"){
+	if(hero == "monk" || hero == "summoner" || hero == "squire" || hero == "huntress"){
 		ControlSend,,{%abilityKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 
 		Sleep, abilityAnimationTime
@@ -774,7 +708,7 @@ AbilitySpam(hero, wrench){ ;Spam right click on apprentice, towerboost on monk
 
 Setup(){ ;Get game resolution and calculate various X/Y coordinates  ;/!\ issues with 1280x1024
 	global DEBUG
-	global offline
+	global OFFLINE
 	global WinID
 	global WinX
 	global WinY
@@ -788,8 +722,10 @@ Setup(){ ;Get game resolution and calculate various X/Y coordinates  ;/!\ issues
 	global repairColorX2
 	global repairColorY1
 	global repairColorY2
+	;Settings loading
+	LoadConfig()
 	;Check for Update if connection
-	if(!offline){
+	if(!OFFLINE){
 		Update()
 	}
 	;Get game's size
@@ -926,7 +862,6 @@ Update(){
 			doTheUpdate := true
 		if(doTheUpdate){
 			UrlDownloadToFile, %downloadURL%, %A_ScriptName%
-			SaveSettingsToFile() ;Import current settings
 			changelog:= StrSplit(newVer.2, "|")
 			changelog:= changelog.1
 			MsgBox,Changelog:%changelog%
@@ -935,6 +870,106 @@ Update(){
 	}
 }
 
-SaveSettingsToFile(){
-	return ;work in progress
+LoadConfig(){
+	global
+
+	ScriptNameNoEXT := StrSplit(A_Scriptname, ".").1
+	iniName := (ScriptNameNoEXT "config.ini")
+ 
+	; This isn't the best implimentation of saving settings but it's the best I could do since this script is dynamically updated
+
+	IniRead, v, %iniName%, Script, SCRIPTVERSION
+	if(v == "ERROR"){
+		v:=221208
+		IniWrite, %v%, %iniName%, Script, SCRIPTVERSION
+	}
+  	IniRead, DEBUG, %iniName%, Script, DEBUG
+	if(DEBUG == "ERROR"){
+		DEBUG:=0
+		IniWrite, %DEBUG%, %iniName%, Script, DEBUG
+	}
+	IniRead, OFFLINE, %iniName%, Script, OFFLINE
+	if(OFFLINE == "ERROR"){
+		OFFLINE:=0
+		IniWrite, %OFFLINE%, %iniName%, Script, OFFLINE
+	}
+
+
+	IniRead, CheckRepairTime, %iniName%, General, CheckRepairTime
+	if(CheckRepairTime == "ERROR"){
+		CheckRepairTime:=100
+		IniWrite, %CheckRepairTime%, %iniName%, General, CheckRepairTime
+	}
+	IniRead, AutoFocusTheGame, %iniName%, General, AutoFocusTheGame
+	if(AutoFocusTheGame == "ERROR"){
+		AutoFocusTheGame:=1
+		IniWrite, %AutoFocusTheGame%, %iniName%, General, AutoFocusTheGame
+	}
+	IniRead, RepairAtBuildPhase, %iniName%, General, RepairAtBuildPhase
+	if(RepairAtBuildPhase == "ERROR"){
+		RepairAtBuildPhase:=0
+		IniWrite, %RepairAtBuildPhase%, %iniName%, General, RepairAtBuildPhase
+	}
+	IniRead, PressSpaceOnLoading, %iniName%, General, PressSpaceOnLoading
+	if(PressSpaceOnLoading == "ERROR"){
+		PressSpaceOnLoading:=1
+		IniWrite, %PressSpaceOnLoading%, %iniName%, General, PressSpaceOnLoading
+	}
+	IniRead, DropManaAtBuildPhase, %iniName%, General, DropManaAtBuildPhase
+	if(DropManaAtBuildPhase == "ERROR"){
+		DropManaAtBuildPhase:=0
+		IniWrite, %DropManaAtBuildPhase%, %iniName%, General, DropManaAtBuildPhase
+	}
+
+
+	IniRead, boostKeybind, %iniName%, HotKeys, boostKeybind
+	if(boostKeybind == "ERROR"){
+		boostKeybind:="c"
+		IniWrite, %boostKeybind%, %iniName%, HotKeys, boostKeybind
+	}
+	IniRead, abilityKeybind, %iniName%, HotKeys, abilityKeybind
+	if(abilityKeybind == "ERROR"){
+		abilityKeybind:="f"
+		IniWrite, %abilityKeybind%, %iniName%, HotKeys, abilityKeybind
+	}
+	IniRead, dropManaKeybind, %iniName%, HotKeys, dropManaKeybind
+	if(dropManaKeybind == "ERROR"){
+		dropManaKeybind:="m"
+		IniWrite, %dropManaKeybind%, %iniName%, HotKeys, dropManaKeybind
+	}
+	IniRead, repairKeybind, %iniName%, HotKeys, repairKeybind
+	if(repairKeybind == "ERROR"){
+		repairKeybind:="r"
+		IniWrite, %repairKeybind%, %iniName%, HotKeys, repairKeybind
+	}
+
+
+	IniRead, monkBoostDuration, %iniName%, BoostDurations, monkBoostDuration
+	if(monkBoostDuration == "ERROR"){
+		monkBoostDuration:=20000
+		IniWrite, %monkBoostDuration%, %iniName%, BoostDurations, monkBoostDuration
+	}
+	IniRead, squireBoostDuration, %iniName%, BoostDurations, squireBoostDuration
+	if(squireBoostDuration == "ERROR"){
+		squireBoostDuration:=20000
+		IniWrite, %squireBoostDuration%, %iniName%, BoostDurations, squireBoostDuration
+	}
+	IniRead, wardenBoostDuration, %iniName%, BoostDurations, wardenBoostDuration
+	if(wardenBoostDuration == "ERROR"){
+		wardenBoostDuration:=20000
+		IniWrite, %wardenBoostDuration%, %iniName%, BoostDurations, wardenBoostDuration
+	}
+	IniRead, summonerBoostDuration, %iniName%, BoostDurations, summonerBoostDuration
+	if(summonerBoostDuration == "ERROR"){
+		summonerBoostDuration:=20000
+		IniWrite, %summonerBoostDuration%, %iniName%, BoostDurations, summonerBoostDuration
+	}
+
+
+	IniRead, squireAbilityCooldown, %iniName%, AbilityCooldowns, squireAbilityCooldown
+	if(squireAbilityCooldown == "ERROR"){
+		squireAbilityCooldown:=6700
+		IniWrite, %squireAbilityCooldown%, %iniName%, AbilityCooldowns, squireAbilityCooldown
+	}
+	return
 }
