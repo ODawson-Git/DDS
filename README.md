@@ -20,7 +20,7 @@ Utility AutoHotKey script for Dungeon Defenders Awakened.
 - Monk - Tower boost,  
 - Apprentice - Hero boost & right click,   
 - Squire - Circular Slice
-- Huntress -
+- Huntress - Phoenix Shot
 - EV - 
 - Rouge - 
 - Warden - 
@@ -32,7 +32,7 @@ Utility AutoHotKey script for Dungeon Defenders Awakened.
 - Monk - Hero boost
 - Apprentice -
 - Squire - Blood boil
-- Huntress -
+- Huntress - 
 - EV - 
 - Rouge -
 - Warden - Wrath
