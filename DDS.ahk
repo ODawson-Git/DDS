@@ -1,6 +1,6 @@
 ;Download https://www.autohotkey.com/download/ahk-install.exe to use this script.
 ;Made by AFK on core#0614 - updated by Wurzle#7136 , message me on discord if you need anything or have suggestions!
-v:=221205 ;Script version, yearmonthday
+v:=221207 ;Script version, yearmonthday
 
 
 
@@ -11,20 +11,21 @@ boostKeybind:="c"
 abilityKeybind:="f"
 dropManaKeybind:="m"
 repairTowerKeybind:="r"
-repairInterval:=100 ;milliseconds (how often to check for something to repair)
+repairInterval:=100 ;milliseconds (how often to check for something to repair and max repair interval)
 AutoFocusTheGame:=1
 repairAtBuildPhase=0
 GAtWarmUpPhase:=1
 PressSpaceOnLoading:=1
 DropManaAtBuildPhase:=0
 offline:=false ;stops checking for updates
-;all of these ability durations are how long to use the ability for (would depend on your mana regen) in milliseconds, you need to have enough mana in a cycle to use ability if using both
+; All of these ability durations are how long to use the ability for (would depend on your mana regen), in milliseconds
+; Ability cannot end during the duration!
 monkBoostAbilityDuration:=20000
 summonerBoostAbilityDuration:=20000
 wardenBoostAbilityDuration:=20000 
 squireBoostAbilityDuration:=20000
-;all of these cooldowns are dependent on your ability !!!THE SPELLBOOK LIES!!!
-squireAbilityCooldown:=1200
+; All of these cooldowns are dependent on your ability using value in spellbook, in milliseconds
+squireAbilityCooldown:=6700
 ;####^^^SETTINGS#### 
 
 
@@ -640,21 +641,14 @@ BoostAbilitySpam(hero, wrench){
 	}
 
 	if(hero != "none"){
-
 		boostAbilityUsed += 1
-
-		Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W215,, 1
 
 		ControlSend,,{%boostKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 
 		if(boostAbilityUsed == 1){
-			Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W215,, 2
+			Sleep, boostAnimationTime
 			boostAbilityTimer := A_TickCount+boostAbilityDuration ;first time will enable for boost duration
-			if(repairSpamToggle || abilitySpamToggle){
-				Sleep, boostAnimationTime
-			}
 		}else if(boostAbilityUsed == 2){
-			Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W215,, 3
 			boostAbilityTimer := A_TickCount+useEvery ;second time will disable for boost cooldown and wait till cooldown off
 			boostAbilityUsed := 0
 		}
@@ -699,10 +693,19 @@ ActivateAbilitySpam(){
 		Progress, 10: OFF	
 	}else if(hero == "squire"){
 		if(abilitySpamToggle){
-			Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W240,, Spam Circular Slice (%abilityKeybind%) every %squireAbilityCooldown%s: ON
+			Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W240,, Spam Circular Slice (%abilityKeybind%) every %squireAbilityCooldown%ms: ON
 			Sleep, 500
 		}else{
 			Progress, 10:B zh0 fs18 CW272822 CTDC143C W190,, Spam Circular Slice: OFF
+			Sleep, 500
+		}
+		Progress, 10: OFF	
+	}else if(hero == "huntress"){
+		if(abilitySpamToggle){
+			Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W200,, Spam Pheonix Shot (%abilityKeybind%): ON
+			Sleep, 500
+		}else{
+			Progress, 10:B zh0 fs18 CW272822 CTDC143C W190,, Spam Pheonix Shot: OFF
 			Sleep, 500
 		}
 		Progress, 10: OFF	
@@ -715,10 +718,6 @@ AbilitySpam(hero, wrench){ ;Spam right click on apprentice, towerboost on monk
 	global boostKeybind
 	global abilityTimer
 	global abilitySpamToggle
-	global boostAbilitySpamToggle
-	global repairSpamToggle
-	global boostAbilityTimer
-	global boostAbilitySpamToggle
 	global squireAbilityCooldown
 
 	if(A_TickCount < abilityTimer){
@@ -732,18 +731,11 @@ AbilitySpam(hero, wrench){ ;Spam right click on apprentice, towerboost on monk
 	if(hero == "monk"){ ;Spam tower boost on monk
 		useEvery := 19500
 		abilityAnimationTime := 500
-
-		ControlSend,,{%abilityKeybind%}, ahk_exe DDS-Win64-Shipping.exe
-
-		abilityTimer := A_TickCount+useEvery
-		if(repairSpamToggle || boostAbilitySpamToggle){
-			Sleep, abilityAnimationTime
-		}
 	}
 	
 	if(hero == "apprentice"){ ;Spam tower boost on apprentice
-		useEvery := 5700
-		abilityAnimationTime := 650
+		useEvery := 6000
+		abilityAnimationTime := 500
 
 		ControlSend,,{%boostKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 		Sleep, 1200
@@ -753,34 +745,30 @@ AbilitySpam(hero, wrench){ ;Spam right click on apprentice, towerboost on monk
 		Sleep, 850
 		ControlSend,,{%boostKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 
+		Sleep, abilityAnimationTime
 		abilityTimer := A_TickCount+useEvery
-		if(repairSpamToggle || boostAbilitySpamToggle){
-			Sleep, abilityAnimationTime
-		}
 	}
 
-	if(hero == "summoner"){ ;Spam tower boost on apprentice
+	if(hero == "summoner"){ 
 		useEvery := 5000
 		abilityAnimationTime := 2000
-
-		ControlSend,,{%abilityKeybind%}, ahk_exe DDS-Win64-Shipping.exe
-
-		abilityTimer := A_TickCount+useEvery
-		if(repairSpamToggle || boostAbilitySpamToggle){
-			Sleep, abilityAnimationTime
-		}
 	}
 
-	if(hero == "squire"){ ;Spam tower boost on apprentice
-		useEvery := squireAbilityCooldown ;the spellbook rounds down and takes a second to spin
+	if(hero == "squire"){ 
+		useEvery := squireAbilityCooldown + 1 ;the spellbook rounds down and takes a second to spin
 		abilityAnimationTime := 1000
+	}
 
+	if(hero == "huntress"){
+		useEvery := 7000
+		abilityAnimationTime := 1000
+	}
+
+	if(hero != "none" && hero != "apprentice"){
 		ControlSend,,{%abilityKeybind%}, ahk_exe DDS-Win64-Shipping.exe
 
+		Sleep, abilityAnimationTime
 		abilityTimer := A_TickCount+useEvery
-		if(repairSpamToggle || boostAbilitySpamToggle){
-			Sleep, abilityAnimationTime
-		}
 	}
 }
 
