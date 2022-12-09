@@ -15,7 +15,15 @@ Requires [AutoHotKey](https://www.autohotkey.com/download/ahk-install.exe) to ru
 
 **F8**: Reload the script.  
 
-**Ctrl+RMB**: Auto fire.  
+**Ctrl+RMB**: Auto fire. 
+- Monk - RMB
+- Apprentice - LMB
+- Squire - LMB
+- Huntress - LMB
+- EV - LMB
+- Rouge - RMB
+- Warden - LMB
+- Summoner - Overlord repair mode **[Requires DDA tabbed in]**
 
 **F9**: Auto G (only in build phase if not wave 1)
 

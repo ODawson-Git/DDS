@@ -414,14 +414,81 @@ CheckRepairColor(){
 
 AutoFire(){ ;Trigger normal attacks depending on class
 	global DEBUG
-	global boostKeybind
+	global repairColorX1
+	global repairColorY1
+	global repairColorX2
+	global repairColorY2
+	global newRepairColorX1
+	global newRepairColorY1
+	global WinWidth
+	global WinHeight
+	global repairSpamToggle
+	global fireUsed
+
 	sleep, 250 ;wait a bit to avoid MouseUp event from the real mouse in case it was activated using Ctrl+Click
 	hero := CheckHeroColor()
-	If(hero == "apprentice" || hero == "huntress" || hero == "squire"|| hero == "ev"|| hero == "warden"){ 
-		ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,,,D
+
+	if(hero != "none"){
+		fireUsed += 1
+	}
+
+	if(hero == "apprentice" || hero == "huntress" || hero == "squire"|| hero == "ev"|| hero == "warden"){ 
+		if(fireUsed == 1){
+			Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W120,, Auto LMB: ON
+			Sleep, 500
+			Progress, 10: OFF
+			ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,,,D
+		}else if(fireused == 2){
+			Progress, 10:B zh0 fs18 CW272822 CTDC143C W120,, Auto LMB: OFF
+			Sleep, 500
+			Progress, 10: OFF
+			ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,,,U
+			fireUsed := 0
+		}
 	}
 	if(hero == "monk"|| hero == "rouge"){ 
-		ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,,D
+		if(fireUsed == 1){
+			Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W120,, Auto LMB: ON
+			Sleep, 500
+			Progress, 10: OFF
+			ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,,D
+		}else if(fireused == 2){
+			Progress, 10:B zh0 fs18 CW272822 CTDC143C W120,, Auto LMB: OFF
+			Sleep, 500
+			Progress, 10: OFF
+			ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,,U
+			fireUsed := 0
+		}
+	}
+	if(hero == "summoner"){ ;if summoner go into overlord and repair coordinates are now mouse cordinates
+		if(fireUsed == 1){
+			ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,,
+			Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W200,, Overlord Repair : ON
+			Sleep, 800
+			Progress, 10: B zh0 fs18 CW272822 CT60D9EF W250,, Set place to repair (CTRL+RMB)
+			Sleep, 1500
+			Progress, 10: OFF
+		}if(fireUsed == 2){
+			MouseGetPos, newRepairColorX1, newRepairColorY1
+			repairColorX1 := newRepairColorX1 - 2
+			repairColorX2 := newRepairColorX1 - 2
+			repairColorY1 := newRepairColorY1 - 2
+			repairColorY2 := newRepairColorY1 - 2
+			Progress, 10: B zh0 fs18 CW272822 CT7CFC00 W120,, Repairing...
+			Sleep, 800
+			repairSpamToggle := 1
+		}else if(fireUsed == 3){
+			ControlClick,, ahk_exe DDS-Win64-Shipping.exe,,RIGHT,,
+			Progress, 10: B zh0 fs18 CW272822 CTDC143C W200,, Overlord Repair : OFF
+			Sleep, 500
+			Progress, 10: OFF
+			repairColorX1 := WinWidth*0.49
+			repairColorY1 := WinHeight*0.51
+			repairColorX2 := WinWidth*0.51
+			repairColorY2 := WinHeight*0.49
+			fireUsed := 0
+			repairSpamToggle := 0
+		}
 	}
 }
 
@@ -454,6 +521,9 @@ RepairSpam(wrench){
 	global repairKeybind
 	global repairTimer
 	global abilitySpamToggle
+	global fireUsed
+	global newRepairColorX1
+	global newRepairColorY1
 
 	if(A_TickCount < repairTimer){
 		return
@@ -461,6 +531,9 @@ RepairSpam(wrench){
 	
 	if(wrench == "nowrench"){
 		ControlSend,,{%repairKeybind%}, ahk_exe DDS-Win64-Shipping.exe
+		if(fireUsed == 2){ ; "fixes" odd issue of mouse moving while trying to repair on summoner
+			MouseMove, newRepairColorX1, newRepairColorY1, 0
+		}
 	}
 
 	if(wrench == "greenwrench"){
@@ -884,7 +957,7 @@ LoadConfig(){
 
 	IniRead, v, %iniName%, Script, SCRIPTVERSION
 	if(v == "ERROR"){
-		v:=221209
+		v:=221210
 		IniWrite, %v%, %iniName%, Script, SCRIPTVERSION
 	}
   	IniRead, DEBUG, %iniName%, Script, DEBUG
