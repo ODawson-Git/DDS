@@ -846,23 +846,27 @@ ToggleDebug(){
 
 ; #Script self-editing
 Update(){
+	global v
+	global iniName
+
 	t:=A_TickCount ;/add a number at the end of the URL to avoid caching issues
 	versionURL := "https://raw.githubusercontent.com/ODawson-Git/DDS/main/lastVersionNumber?t="%t%
 	downloadURL:= "https://raw.githubusercontent.com/ODawson-Git/DDS/main/DDS.ahk?t="%t%
-	global v
 	ErrorLevel := 0
 	hObject:=ComObjCreate("WinHttp.WinHttpRequest.5.1") ;Create the Object
 	hObject.Open("GET",versionURL) ;Open communication
 	hObject.Send() ;Send the "get" request
 	;newVer:=subStr(hObject.ResponseText,1,6) 
-	newVer:=StrSplit(hObject.ResponseText, ":")
-	if(newVer.1>v && ErrorLevel==0){
+	newVerSplit:=StrSplit(hObject.ResponseText, ":")
+	newVer:=newVerSplit.1
+	if(newVer>v && ErrorLevel==0){
 		MsgBox,4,Update, A new version of the script is available. Would you like to download it?
 		IfMsgBox, Yes
 			doTheUpdate := true
 		if(doTheUpdate){
 			UrlDownloadToFile, %downloadURL%, %A_ScriptName%
-			changelog:= StrSplit(newVer.2, "|")
+			IniWrite, %newVer%, %iniName%, Script, SCRIPTVERSION
+			changelog:= StrSplit(newVerSplit.2, "|")
 			changelog:= changelog.1
 			MsgBox,Changelog:%changelog%
 			Reload
@@ -880,7 +884,7 @@ LoadConfig(){
 
 	IniRead, v, %iniName%, Script, SCRIPTVERSION
 	if(v == "ERROR"){
-		v:=221208
+		v:=221209
 		IniWrite, %v%, %iniName%, Script, SCRIPTVERSION
 	}
   	IniRead, DEBUG, %iniName%, Script, DEBUG
