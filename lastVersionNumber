@@ -1,3 +1,12 @@
+221229:
+- Updated script to AHK V2
+- Windowed mode supported, supported resolutions listed and contribution instructions added
+- Optimisations to code
+- More likely to work with map open
+v1 is available on git|
+
+---
+
 221210:
 - Added overlord autorepair|
 
