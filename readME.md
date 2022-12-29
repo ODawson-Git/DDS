@@ -1,6 +1,6 @@
 ![](https://i.imgur.com/oZ3gHmt.png)
 
-#DDAFKonCore
+# DDS
 Utility AutoHotKey script for Dungeon Defenders Awakened.  
 
 
