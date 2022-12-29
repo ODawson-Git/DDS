@@ -34,6 +34,7 @@ Resolutions := {
 
 Now we need to reopen the script and enable debug (F8) to see if it is reading the correct values
 ![](https://i.imgur.com/XuW87H7.png)
+
 <sub>Some values only appear when activated, e.g. repair. It is normal for the debug window to flicker as it is being updated very fast</sub>
 
 Along the debug window we have what the game is returning our coordinate as `monk`, then the corresponding RGB value `299 102 32` and then the position it is reading from `(44, 82)` and then the time it was last sampled `17232734`
