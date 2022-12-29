@@ -5,7 +5,7 @@ Utility AutoHotKey script for Dungeon Defenders Awakened.
 
 
 ## Usage
-Requires [AutoHotKey v2](https://www.autohotkey.com/download/ahk-v2.exe) to run. Simply open `DDAFKonCore.ahk`
+Requires [AutoHotKey v2](https://www.autohotkey.com/download/ahk-v2.exe) to run. Simply open `DDS.ahk`
 
 The script reads colors on screen to know current game phase and hero being played so only some resolutions are supported
 
