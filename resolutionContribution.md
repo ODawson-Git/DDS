@@ -1,6 +1,6 @@
 # How to contribute to supported resolutions
 
-In `DDAfk.ahk` at around line `36` we have
+In `DDS.ahk` at around line `36` we have
 
 ```autohotkey
 Resolutions := {
