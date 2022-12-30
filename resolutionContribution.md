@@ -33,7 +33,7 @@ Resolutions := {
 }
 ```
 
-Now we need to reopen the script and enable debug (F8) to see if it is reading the correct values
+Now we need to reopen the script and enable debug (F7) to see if it is reading the correct values
 ![](https://i.imgur.com/XuW87H7.png)
 
 <sub>Some values only appear when activated, e.g. repair. It is normal for the debug window to flicker as it is being updated very fast</sub>
