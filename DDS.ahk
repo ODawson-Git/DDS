@@ -1,7 +1,7 @@
 #SingleInstance Force
 #Requires AutoHotkey v2.0-beta
 
-v := 221229 ;YYMMDD
+v := 221230 ;YYMMDD
 
 objindexget(obj,key) { 
     if obj.HasOwnProp(key) 
@@ -26,8 +26,8 @@ State := {  AutoG : false,
             ToggleTowerBuff : false,
             ToggleRepair : false,
             ToggleMouseRepair : false,
-            RenderDebug : false,
-            DumpMana : false,
+            ToggleDebug : false,
+            ToggleManaDump : false,
             PostWarmup : false,
             NextF : 0,
             NextC : 0,
@@ -38,10 +38,11 @@ State := {  AutoG : false,
             lastphase : "0"}
 
 Resolutions := {
-    ;1920x1440: {Phase:{x:12345,y:12345}, Hero:{x:12345,y:12345}, Toggle:{x:12345,y:12345} },
+    3440x1440:  {Phase:{x:3332,y:88}, Hero:{x:58,y:115}, Toggle:{x:3034,y:1113}, Repair:{x:1730, y:702}, MouseRepairOffset:{x:-3, y:-3}}, 
+    2560x1440:  {Phase:{x:2469,y:81}, Hero:{x:56,y:109}, Toggle:{x:2192,y:1116}, Repair:{x:2196, y:687}, MouseRepairOffset:{x:-2, y:-2}},
     1920x1080:  {Phase:{x:1853,y:63}, Hero:{x:44,y:82}, Toggle:{x:1645,y:837}, Repair:{x:973, y:531}, MouseRepairOffset:{x:-1, y:-1}},
-    1280x720:   {Phase:{x:1235,y:40}, Hero:{x:29,y:53}, Toggle:{x:1096,y:558}, Repair:{x:649, y:355}, MouseRepairOffset:{x:-1, y:-1}}
-    ;3072x1920: {Phase:{x:12345,y:12345}, Hero:{x:12345,y:12345}, Toggle:{x:12345,y:12345} }320 160
+    1280x720:   {Phase:{x:1235,y:40}, Hero:{x:29,y:53}, Toggle:{x:1096,y:558}, Repair:{x:649, y:355}, MouseRepairOffset:{x:-1, y:-1}},
+    960x540:   {Phase:{x:927,y:30}, Hero:{x:21,y:41}, Toggle:{x:822,y:419}, Repair:{x:487, y:266}, MouseRepairOffset:{x:-1, y:-1}}
 }
 
 ; boss colors hasn't been set up yet
@@ -101,7 +102,7 @@ GetWindowCoords()
         }
         else{
             global WindowCoords := {init: 0, x: Xo, y: Yo, w: Wo, h: Ho}
-            MsgBox("Resolution not supported")
+            Show("Resolution not supported : ", "information",  "")
         }    
 	}
     else
@@ -217,6 +218,12 @@ Update(){
     }
 }
 
+Resize(w, h){ ; resizes win
+    WinMove ,, w, h, DDAexe
+    WinGetClientPos(,, &Wo, &Ho, DDAexe)
+    WinMove ,, 2*w - Wo, 2*h - Ho, DDAexe
+}
+
 G(){
     if State.AutoG && A_TickCount > State.NextG {
         if State.AutoG > 1 {
@@ -245,7 +252,7 @@ G(){
 }
 
 M(){
-    if State.DumpMana && A_TickCount > State.NextM
+    if State.ToggleManaDump && A_TickCount > State.NextM
     {
         State.NextM := A_TickCount + 1000
         ControlSend("{Blind}{m down}", , DDAexe)
@@ -309,15 +316,16 @@ ToggleState(statestr,text,terinary := 1){
     Show(text " : ", State.%statestr% ? "ON":"OFF", "")
 }
 
+^!R:: Resize(960, 540)
 ^RButton:: AutoAttack()
 ^DEL:: ExitApp
-F7:: ToggleState("DumpMana", "Auto Dump Mana")
-F8:: ToggleState("RenderDebug", "Debug")
+F7:: ToggleState("ToggleDebug", "Debug")
+F8:: ToggleState("ToggleRepair", "Auto Repair") 
+^F8:: ToggleState("ToggleManaDump", "Auto Dump Mana")
 F9:: ToggleState("AutoG", "Auto G", 1)
 ^F9:: ToggleState("AutoG", "Force G", 2)
 F10:: ToggleState("ToggleHeroBuff", "Auto Hero Buff") 
 F11:: ToggleState("ToggleTowerBuff", "Auto Tower Buff") 
-F12:: ToggleState("ToggleRepair", "Auto Repair") 
 
 Update()
 
@@ -407,6 +415,6 @@ Logic(){
         if State.ToggleRepair && A_Tickcount > State.NextInput + 225 
             Repair()
     }
-    if State.RenderDebug
+    if State.ToggleDebug
         ShowDebug()
 }

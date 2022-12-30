@@ -10,16 +10,49 @@ Requires [AutoHotKey v2](https://www.autohotkey.com/download/ahk-v2.exe) to run.
 The script reads colors on screen to know current game phase and hero being played so only some resolutions are supported
 
 **Current supported resolutions**
+- 3440x1440
+- 2560x1440
 - 1920x1080
 - 1280x720
+- 960x540
 
 <sub>If you would like to contribute to the supported resolutions follow this [guide](https://github.com/ODawson-Git/DDS/blob/main/resolutionContribution.md)</sub>
 
-##Keybinds
+## Keybinds
 
 **Ctrl+Del**: Kills the script
 
-**F8**: Enable debug  
+**Ctrl+Alt+R**: Resizes DDA to 960x540 (change on line ~320)
+
+**F7**: Enable debug  
+
+**F8**: Auto repair 
+
+**Ctrl+F8** Enable mana dump
+
+**F9**: Auto G 
+
+**Ctrl+F9**: Toggles between force G and solo G
+
+**F10**: Hero buff spam
+- Monk - Hero Boost
+- Apprentice - 
+- Squire - Blood Boil
+- Huntress - Adrenaline Rush
+- EV - 
+- Rouge -
+- Warden - Wrath
+- Summoner - Pet Boost
+
+**F11**: Tower buff spam
+- Monk - Tower boost,  
+- Apprentice - Hero boost & right click,   
+- Squire - 
+- Huntress - 
+- EV - 
+- Rouge - 
+- Warden - Wrath
+- Summoner - Flash Heal
 
 **Ctrl+RMB**: Auto fire. 
 - Monk - RMB
@@ -32,31 +65,3 @@ The script reads colors on screen to know current game phase and hero being play
 - Summoner - Toggle Auto repair mouse mode
 
 <sub>Currently, `Auto repair mouse mode` only works on Windows scaling 100%</sub>
-
-**F9**: Auto G 
-
-**Ctrl+F9**: Toggles between force G and solo G
-
-**F12**: Auto repair 
-
-**F11**: Tower buff spam
-- Monk - Tower boost,  
-- Apprentice - Hero boost & right click,   
-- Squire - 
-- Huntress - 
-- EV - 
-- Rouge - 
-- Warden - Wrath
-- Summoner - Flash Heal
-
-
-**F10**: Hero buff spam
-- Monk - Hero Boost
-- Apprentice - 
-- Squire - Blood Boil
-- Huntress - Adrenaline Rush
-- EV - 
-- Rouge -
-- Warden - Wrath
-- Summoner - Pet Boost
-

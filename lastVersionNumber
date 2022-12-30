@@ -1,3 +1,10 @@
+221230:
+- Added 3440x1440, 2560x1440, 960x540 support
+- Added resize hotkey to easily resize DDA to 960x540
+- Changed some hotkeys around (sorry!)
+- Reduced harshness of incompatible resolution|
+
+
 221229:
 - Updated script to AHK V2
 - Windowed mode supported, supported resolutions listed and contribution instructions added
