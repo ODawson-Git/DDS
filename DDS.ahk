@@ -1,7 +1,7 @@
 #SingleInstance Force
 #Requires AutoHotkey v2.0-beta
 
-v := 221230 ;YYMMDD
+v := 230101 ;YYMMDD
 
 objindexget(obj,key) { 
     if obj.HasOwnProp(key) 
@@ -48,7 +48,7 @@ Resolutions := {
 ; boss colors hasn't been set up yet
 PhaseColors := {
     mapover:    {R: 0,          G: 77,          B: 119,     Rm: 7  ,         Gm: 55,        Bm: 94  }, 
-    warmup:     {R: 148,        G: 106,         B: 0,       Rm: 105,         Gm: 73,        Bm: 16  }, 
+    warmup:     {R: 162,        G: 117,         B: 0,       Rm: 153,         Gm: 112,        Bm: 16  }, 
     build:      {R: 75,         G: 124,         B: 0,       Rm: 57 ,         Gm: 85,        Bm: 16  }, 
     combat:     {R: 127,        G: 25,          B: 39,      Rm: 90 ,         Gm: 20,        Bm: 42  }, 
     tavern:     {R: 165,        G: 89,          B: 0,       Rm: 115,         Gm: 62,        Bm: 16  }, 
@@ -79,7 +79,7 @@ HeroColors := {
 }
 
 HeroAbilities := {
-    apprentice: {A: "LEFT",                                                     C: {Type: "Tower", AnimT: 1250, Recast: "M2Toggle", M2AnimT: 1500, M2Recast: 7000}}, 
+    apprentice: {A: "LEFT",                                   C: {Type: "Tower", AnimT: 1500, Recast: "M2Toggle", M2AnimT: 1500, M2Recast: 7000}}, 
     monk:       {A: "RIGHT",    F: {Type: "Tower", AnimT: 500, Recast: 19000},  C:{Type: "Hero", AnimT: 500, Recast: "Toggle"}}, 
     squire:     {A: "LEFT",                                                     C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}}, 
     huntress:   {A: "LEFT",                                                     C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}}, 
@@ -338,7 +338,7 @@ Scan(){
     GetWindowCoords()
 	if WindowCoords.init == 0
 		return
-    CheckColorFuzzy("phase",WindowOffset(Resolutions[Res].Phase), PhaseColors) 
+    CheckColorFuzzy("phase",WindowOffset(Resolutions[Res].Phase), PhaseColors, 600) 
     if (PixelValues["phase"].s != "combat" && PixelValues["phase"].s != "boss") || 
         (PixelValues["phase"].s == "combat" && State.lastphase != "combat") || 
         (PixelValues["phase"].s == "boss" && (State.lastphase != "combat" || State.lastphase != "boss"))
@@ -355,11 +355,15 @@ Logic(){
     phase := PixelValues["phase"].s
     if(phase == "loading") {
         ControlSend("{Blind}{Space}", , DDAexe)
-        State.PostWarmup := true
+        if State.AutoG{
+            State.PostWarmup := true
+        }
         return
     } else if(phase == "warmup") {
 		G()
-        State.PostWarmup := true
+        if State.AutoG{
+            State.PostWarmup := true
+        }
     } else if(phase == "build"){
         if State.PostWarmup == false
 			G()
@@ -412,7 +416,7 @@ Logic(){
 				}
 			}
         }
-        if State.ToggleRepair && A_Tickcount > State.NextInput + 225 
+        if State.ToggleRepair && A_Tickcount > State.NextInput + 300 
             Repair()
     }
     if State.ToggleDebug

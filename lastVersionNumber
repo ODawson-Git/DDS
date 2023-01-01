@@ -1,3 +1,7 @@
+230101:
+Happy new year!
+- Fixed bug involving autog sometimes detecting combat phase|
+
 221230:
 - Added 3440x1440, 2560x1440, 960x540 support
 - Added resize hotkey to easily resize DDA to 960x540
