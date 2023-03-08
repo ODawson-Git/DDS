@@ -1,7 +1,7 @@
 #SingleInstance Force
 #Requires AutoHotkey v2.0-beta
 
-v := 230101 ;YYMMDD
+v := 230308 ;YYMMDD
 
 objindexget(obj,key) { 
     if obj.HasOwnProp(key) 
@@ -38,6 +38,7 @@ State := {  AutoG : false,
             lastphase : "0"}
 
 Resolutions := {
+    3072x1920:  {Phase:{x:2962,y:113}, Hero:{x:74,y:143}, Toggle:{x:2601,y:1487}, Repair:{x:1560, y:945}, MouseRepairOffset:{x:-3, y:-3}},
     3440x1440:  {Phase:{x:3332,y:88}, Hero:{x:58,y:115}, Toggle:{x:3034,y:1113}, Repair:{x:1730, y:702}, MouseRepairOffset:{x:-3, y:-3}}, 
     2560x1440:  {Phase:{x:2469,y:81}, Hero:{x:56,y:109}, Toggle:{x:2192,y:1116}, Repair:{x:2196, y:687}, MouseRepairOffset:{x:-2, y:-2}},
     1920x1080:  {Phase:{x:1853,y:63}, Hero:{x:44,y:82}, Toggle:{x:1645,y:837}, Repair:{x:973, y:531}, MouseRepairOffset:{x:-1, y:-1}},
@@ -45,7 +46,6 @@ Resolutions := {
     960x540:   {Phase:{x:927,y:30}, Hero:{x:21,y:41}, Toggle:{x:822,y:419}, Repair:{x:487, y:266}, MouseRepairOffset:{x:-1, y:-1}}
 }
 
-; boss colors hasn't been set up yet
 PhaseColors := {
     mapover:    {R: 0,          G: 77,          B: 119,     Rm: 7  ,         Gm: 55,        Bm: 94  }, 
     warmup:     {R: 162,        G: 117,         B: 0,       Rm: 153,         Gm: 112,        Bm: 16  }, 
@@ -79,7 +79,7 @@ HeroColors := {
 }
 
 HeroAbilities := {
-    apprentice: {A: "LEFT",                                   C: {Type: "Tower", AnimT: 1500, Recast: "M2Toggle", M2AnimT: 1500, M2Recast: 7000}}, 
+    apprentice: {A: "LEFT",                                                     C: {Type: "Tower", AnimT: 1500, Recast: "M2Toggle", M2AnimT: 1500, M2Recast: 7000}}, 
     monk:       {A: "RIGHT",    F: {Type: "Tower", AnimT: 500, Recast: 19000},  C:{Type: "Hero", AnimT: 500, Recast: "Toggle"}}, 
     squire:     {A: "LEFT",                                                     C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}}, 
     huntress:   {A: "LEFT",                                                     C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}}, 
@@ -154,7 +154,7 @@ GUIColors := {
 
 ShowDebug(){
     ShowGUI := Gui()
-    ShowGUI.Opt("+AlwaysOnTop -Caption +ToolWindow")
+    ShowGUI.Opt("+AlwaysOnTop -Caption +ToolWindow -DPIScale")
     ShowGUI.SetFont("s11")
     ShowGUI.BackColor := GUIColors.backcolor
     for k, v in PixelValues
@@ -172,7 +172,7 @@ ShowDebug(){
 
 Show(text, state, text2){
     ShowGUI := Gui()
-    ShowGUI.Opt("+AlwaysOnTop -Caption +ToolWindow")
+    ShowGUI.Opt("+AlwaysOnTop -Caption +ToolWindow -DPIScale")
     ShowGUI.SetFont("s11")
     ShowGUI.BackColor := GUIColors.backcolor
     ShowGUI.Add("Text", GUIColors.%state%, text state text2)
@@ -311,8 +311,8 @@ CleanWrench(){
     }
 }
 
-ToggleState(statestr,text,terinary := 1){
-    State.%statestr% := State.%statestr% == terinary ? 0 : 1
+ToggleState(statestr, text, terinary := 1) {
+    State.%statestr% := State.%statestr% == terinary ? 0 : terinary
     Show(text " : ", State.%statestr% ? "ON":"OFF", "")
 }
 

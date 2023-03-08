@@ -10,6 +10,7 @@ Requires [AutoHotKey v2](https://www.autohotkey.com/download/ahk-v2.exe) to run.
 The script reads colors on screen to know current game phase and hero being played so only some resolutions are supported
 
 **Current supported resolutions**
+- 3072x1920
 - 3440x1440
 - 2560x1440
 - 1920x1080
@@ -65,3 +66,7 @@ The script reads colors on screen to know current game phase and hero being play
 - Summoner - Toggle Auto repair mouse mode
 
 <sub>Currently, `Auto repair mouse mode` only works on Windows scaling 100%</sub>
+
+## Known issues
+- Auto repair mouse mode only works for Windows scaling 100% due to DDA bug"?" with wrench size
+![](https://i.imgur.com/fmfjFQL.jpeg)

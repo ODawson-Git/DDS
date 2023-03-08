@@ -1,5 +1,9 @@
+230308:
+- Fixed windows UI scaling for monitors with a high DPI
+- Added 3072x1920 support
+- Fixed ForceG, thanks oswarlan#6443|
+
 230101:
-Happy new year!
 - Fixed bug involving autog sometimes detecting combat phase|
 
 221230:
