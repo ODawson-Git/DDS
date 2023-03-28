@@ -25,6 +25,8 @@ The script reads colors on screen to know current game phase and hero being play
 
 **Ctrl+Alt+R**: Resizes DDA to 960x540 (change on line ~320)
 
+**Ctrl+Alt+T**: Ends map and shuts down PC on summary phase
+
 **F7**: Enable debug  
 
 **F8**: Auto repair 
@@ -44,6 +46,7 @@ The script reads colors on screen to know current game phase and hero being play
 - Rouge -
 - Warden - Wrath
 - Summoner - Pet Boost
+- Guardian - Divine Protection
 
 **F11**: Tower buff spam
 - Monk - Tower boost,  
@@ -54,6 +57,7 @@ The script reads colors on screen to know current game phase and hero being play
 - Rouge - 
 - Warden - Wrath
 - Summoner - Flash Heal
+- Guardian -
 
 **Ctrl+RMB**: Auto fire. 
 - Monk - RMB
@@ -64,6 +68,7 @@ The script reads colors on screen to know current game phase and hero being play
 - Rouge - RMB
 - Warden - LMB
 - Summoner - Toggle Auto repair mouse mode
+- Guardian -
 
 <sub>Currently, `Auto repair mouse mode` only works on Windows scaling 100%</sub>
 

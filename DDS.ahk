@@ -1,7 +1,7 @@
 #SingleInstance Force
 #Requires AutoHotkey v2.0-beta
 
-v := 230308 ;YYMMDD
+v := 230328 ;YYMMDD
 
 objindexget(obj,key) { 
     if obj.HasOwnProp(key) 
@@ -28,7 +28,10 @@ State := {  AutoG : false,
             ToggleMouseRepair : false,
             ToggleDebug : false,
             ToggleManaDump : false,
+	        ToggleSummaryShutdown:  false,
             PostWarmup : false,
+            PostMapover : 0,
+            NextShutdown : 0,
             NextF : 0,
             NextC : 0,
             NextM : 0,
@@ -75,18 +78,20 @@ HeroColors := {
     ev:          {R: 122,       G: 31,          B: 185,   Rm: 85,      Gm: 29,     Bm: 130}, 
     warden:      {R: 85,        G: 75,          B: 79,    Rm: 57,      Gm: 53,     Bm: 64 }, 
     rogue:       {R: 87,        G: 5,           B: 54,    Rm: 64,      Gm: 14,     Bm: 54 }, 
-    summoner:    {R: 54,        G: 52,          B: 85,    Rm: 46,      Gm: 40,     Bm: 72 }
+    summoner:    {R: 54,        G: 52,          B: 85,    Rm: 46,      Gm: 40,     Bm: 72 },
+    guardian:    {R: 252,       G: 151,         B: 0,     Rm: 190,     Gm: 140,    Bm: 10 },
 }
 
 HeroAbilities := {
     apprentice: {A: "LEFT",                                                     C: {Type: "Tower", AnimT: 1500, Recast: "M2Toggle", M2AnimT: 1500, M2Recast: 7000}}, 
-    monk:       {A: "RIGHT",    F: {Type: "Tower", AnimT: 500, Recast: 19000},  C:{Type: "Hero", AnimT: 500, Recast: "Toggle"}}, 
+    monk:       {A: "RIGHT",    F: {Type: "Tower", AnimT: 500, Recast: 19000},  C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}}, 
     squire:     {A: "LEFT",                                                     C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}}, 
     huntress:   {A: "LEFT",                                                     C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}}, 
     ev:         {A: "LEFT"},    
     warden:     {A: "LEFT",                                                     C: {Type: "Both", AnimT: 500, Recast: "Toggle"}}, 
     rogue:      {A: "LEFT"}, 
-    summoner:   {A: "Repair",   F: {Type: "Tower", AnimT: 2000, Recast: 5100},  C:{Type: "Hero", AnimT: 500, Recast: "Toggle"}}
+    summoner:   {A: "Repair",   F: {Type: "Tower", AnimT: 2000, Recast: 5100},  C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}},
+    guardian:   {A: "LEFT",                                                     C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}}
 }
 
 global WindowCoords := {init: 0}
@@ -218,6 +223,34 @@ Update(){
     }
 }
 
+ShutdownTimer(){ ; 0 = not started, 1 = started, 2 = cancelled
+    if (State.PostMapover == 0) {
+        ShutdownGUI := Gui("-Theme")
+        ShutdownGUI.Opt("+AlwaysOnTop -Caption +ToolWindow -DPIScale")
+        ShutdownGUI.SetFont("s11")
+        ShutdownGUI.BackColor := GUIColors.backcolor
+        ShutdownGUI.Add("Button", GUIColors.information " Background" SubStr(GUIColors.backcolor, 2, 6) " " , "Cancel").OnEvent("Click", Cancel)
+        ShutdownGUI.Show(" y -100") ;Show out of viewing area to get dimensions
+        ShutdownGUI.GetPos(, , &GWidth, &GHeight) ;GetPos only works when GUI active
+        ShutdownGUI.Move(WindowCoords.x + WindowCoords.w - GWidth, WindowCoords.y + WindowCoords.h*0.5 - GHeight*0.5)
+        State.NextShutdown := A_TickCount + 60000
+        State.PostMapover := 1
+    }
+
+    if (A_TickCount > State.NextShutdown && State.PostMapover == 1) {
+        ShutdownGUI.Destroy()
+        Shutdown 1
+    }
+
+    Cancel(*){
+        State.PostMapover := 2
+        ShutdownGUI.Destroy()
+    }
+
+    
+
+}
+
 Resize(w, h){ ; resizes win
     WinMove ,, w, h, DDAexe
     WinGetClientPos(,, &Wo, &Ho, DDAexe)
@@ -317,6 +350,7 @@ ToggleState(statestr, text, terinary := 1) {
 }
 
 ^!R:: Resize(960, 540)
+^!T:: ToggleState("ToggleSummaryShutdown", "Summary Shutdown")
 ^RButton:: AutoAttack()
 ^DEL:: ExitApp
 F7:: ToggleState("ToggleDebug", "Debug")
@@ -372,6 +406,7 @@ Logic(){
     hero := PixelValues["hero"].s
     if(phase == "combat" || phase == "boss" || phase == "tavern") {
         State.PostWarmup := false
+        State.PostMapover := 0
         if HeroAbilities[hero]["C"] {
             if (HeroAbilities[hero].C.Type == "Tower" && State.ToggleTowerBuff) || 
 			   (HeroAbilities[hero].C.Type == "Hero" && State.ToggleHeroBuff) || 
@@ -419,6 +454,14 @@ Logic(){
         if State.ToggleRepair && A_Tickcount > State.NextInput + 300 
             Repair()
     }
+    if(phase == "mapover") {
+	    if State.ToggleSummaryShutdown {
+            G()
+	    	ShutdownTimer()
+	    }
+    }
+    if State.PostMapover == 1
+        Show("Shutting down in " Round((State.NextShutdown - A_TickCount) / 1000, 2) " seconds : ", "information",  "")
     if State.ToggleDebug
         ShowDebug()
 }

@@ -1,3 +1,7 @@
+230328:
+- Added summary shutdown
+- Added temporary support for Guardian|
+
 230308:
 - Fixed windows UI scaling for monitors with a high DPI
 - Added 3072x1920 support
