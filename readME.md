@@ -68,7 +68,7 @@ The script reads colors on screen to know current game phase and hero being play
 - Rouge - RMB
 - Warden - LMB
 - Summoner - Toggle Auto repair mouse mode
-- Guardian -
+- Guardian - LMB
 
 <sub>Currently, `Auto repair mouse mode` only works on Windows scaling 100%</sub>
 
