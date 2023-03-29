@@ -1,7 +1,7 @@
 #SingleInstance Force
 #Requires AutoHotkey v2.0-beta
 
-v := 230328 ;YYMMDD
+v := 230329 ;YYMMDD
 
 objindexget(obj,key) { 
     if obj.HasOwnProp(key) 
@@ -19,7 +19,8 @@ Object.Prototype.DefineProp("__Item", {Get: objindexget, Set: objindexset})
 CoordMode("Pixel", "Screen")
 CoordMode("Mouse", "Screen")
 
-DDAexe := "ahk_exe DDS-Win64-Shipping.exe" ;You can use Window Spy to see the exe name
+DDAexe := "ahk_exe DDS-Win64-Shipping.exe" ; You can use Window Spy to see the exe name
+DesiredFont := "Arial" ; DDA uses 'Poppins' font (you will have to install it)
 
 State := {  AutoG : false,
             ToggleHeroBuff : false,
@@ -120,9 +121,32 @@ WindowOffset(offset){
     return {x: WindowCoords.x + offset.x, y: WindowCoords.y + offset.y}
 }
 
-GetMousePos(offset:= 0){ ;only works on Windows Scaling 100%
+GetMousePos(offset:= 0){ ; only works on Windows Scaling 100%
     MouseGetPos(&MouseX, &MouseY)
     return {x: MouseX + offset.x, y: MouseY + offset.y}
+}
+
+
+IsFont(FontName){
+	Loop Reg, "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"
+	{
+		If (RegExMatch(A_LoopRegName, "^" . FontName . " \(") > 0)
+		{
+			Return true
+		}
+	}
+	Return false
+}
+
+SetFont(DesiredFont){
+    global Font
+    if IsFont(DesiredFont) {
+        Font := DesiredFont
+    }
+    else{
+        Font := "Arial"
+        MsgBox("Font not found: " DesiredFont  ". Using Arial instead.", , )
+    }
 }
 
 global PixelValues := Map()
@@ -160,14 +184,14 @@ GUIColors := {
 ShowDebug(){
     ShowGUI := Gui()
     ShowGUI.Opt("+AlwaysOnTop -Caption +ToolWindow -DPIScale")
-    ShowGUI.SetFont("s11")
+    ShowGUI.SetFont("s11", Font)
     ShowGUI.BackColor := GUIColors.backcolor
     for k, v in PixelValues
         ShowGUI.Add("Text", GUIColors.information, k "  -  " v.s "      " v.r "  " v.g "  " v.b "      " Round(v.x) "  " Round(v.y) "      " v.u)
     for k, v in State.OwnProps()
         ShowGUI.Add("Text", v ? GUIColors.ON : GUIColors.OFF, k "  -  " v)
-    ShowGUI.Show("y" A_ScreenHeight " NoActivate") ;Show out of viewing area to get dimensions
-    ShowGUI.GetPos(, , &GWidth, &GHeight) ;GetPos only works when GUI active
+    ShowGUI.Show("y" A_ScreenHeight " NoActivate") ; Show out of viewing area to get dimensions
+    ShowGUI.GetPos(, , &GWidth, &GHeight) ; GetPos only works when GUI active
     ShowGUI.Move(WindowCoords.x, WindowCoords.y + WindowCoords.h*0.5 - GHeight*0.5)
     Cleanup(){
         ShowGUI.Destroy() 
@@ -178,11 +202,11 @@ ShowDebug(){
 Show(text, state, text2){
     ShowGUI := Gui()
     ShowGUI.Opt("+AlwaysOnTop -Caption +ToolWindow -DPIScale")
-    ShowGUI.SetFont("s11")
+    ShowGUI.SetFont("s11", Font)
     ShowGUI.BackColor := GUIColors.backcolor
     ShowGUI.Add("Text", GUIColors.%state%, text state text2)
-    ShowGUI.Show(" y -100" " NoActivate") ;Show out of viewing area to get dimensions
-    ShowGUI.GetPos(, , &GWidth, &GHeight) ;GetPos only works when GUI active
+    ShowGUI.Show(" y -100" " NoActivate") ; Show out of viewing area to get dimensions
+    ShowGUI.GetPos(, , &GWidth, &GHeight) ; GetPos only works when GUI active
     ShowGUI.Move(WindowCoords.x + WindowCoords.w*0.5 - GWidth*0.5, WindowCoords.y + WindowCoords.h*0.5 - GHeight*0.5)
     Cleanup(){
         ShowGUI.Destroy() 
@@ -200,7 +224,7 @@ Update(){
             ;make gui
             UpdateGUI := Gui("-Theme")
             UpdateGUI.Opt("+AlwaysOnTop -Caption +ToolWindow")
-            UpdateGUI.SetFont("s11")
+            UpdateGUI.SetFont("s11", Font)
             UpdateGUI.BackColor := GUIColors.backcolor
             UpdateGUI.Add("Text", GUIColors.information, "New feature(s) added:")
             changelog:= StrSplit(newVerSplit[2], "|")[1]
@@ -227,18 +251,17 @@ ShutdownTimer(){ ; 0 = not started, 1 = started, 2 = cancelled
     if (State.PostMapover == 0) {
         ShutdownGUI := Gui("-Theme")
         ShutdownGUI.Opt("+AlwaysOnTop -Caption +ToolWindow -DPIScale")
-        ShutdownGUI.SetFont("s11")
+        ShutdownGUI.SetFont("s11", Font)
         ShutdownGUI.BackColor := GUIColors.backcolor
         ShutdownGUI.Add("Button", GUIColors.information " Background" SubStr(GUIColors.backcolor, 2, 6) " " , "Cancel").OnEvent("Click", Cancel)
-        ShutdownGUI.Show(" y -100") ;Show out of viewing area to get dimensions
-        ShutdownGUI.GetPos(, , &GWidth, &GHeight) ;GetPos only works when GUI active
+        ShutdownGUI.Show(" y -100") ; Show out of viewing area to get dimensions
+        ShutdownGUI.GetPos(, , &GWidth, &GHeight) ; GetPos only works when GUI active
         ShutdownGUI.Move(WindowCoords.x + WindowCoords.w - GWidth, WindowCoords.y + WindowCoords.h*0.5 - GHeight*0.5)
         State.NextShutdown := A_TickCount + 60000
         State.PostMapover := 1
     }
 
     if (A_TickCount > State.NextShutdown && State.PostMapover == 1) {
-        ShutdownGUI.Destroy()
         Shutdown 1
     }
 
@@ -296,26 +319,35 @@ M(){
     }
 }
 
-Repair(){
+CleanWrench(){
+    if State.ToggleRepair
+    {
+        UpdateWrench()
+        if(PixelValues["wrench"].s != 0){
+            ControlClick(,DDAexe, , "RIGHT") 
+        }
+    }
+}
+
+UpdateWrench(){
     if State.ToggleMouseRepair {
         CheckColorFuzzy("wrench",GetMousePos(Resolutions[Res].MouseRepairOffset), RepairColors, 300)
     }else{
         CheckColorFuzzy("wrench",WindowOffset(Resolutions[Res].Repair), RepairColors, 300)
-    }
-    wrench := PixelValues["wrench"].s
-    if(wrench == 0){
+    } 
+}
+
+Repair(){
+    UpdateWrench()
+    if(PixelValues["wrench"].s == 0){
         ControlSend("{Blind}{r}", , DDAexe)
     }
-    else if(wrench == "greenwrench"){
+    else if(PixelValues["wrench"].s == "greenwrench"){
         ControlClick(,DDAexe, , "LEFT")
-        SetTimer(Cleanup,-200) ;200ms max repair time (has to be less than timer for Repair())
+        SetTimer(Cleanup,-200) ; 200ms max repair time (has to be less than timer for Repair())
 
         Cleanup(){
-            if State.ToggleMouseRepair {
-                CheckColorFuzzy("wrench",GetMousePos(Resolutions[Res].MouseRepairOffset), RepairColors, 300)
-            }else{
-                CheckColorFuzzy("wrench",WindowOffset(Resolutions[Res].Repair), RepairColors, 300)
-            }
+            UpdateWrench()
             if(PixelValues["wrench"].s != 0){
                 ControlClick(,DDAexe, , "RIGHT") 
             }
@@ -330,16 +362,6 @@ AutoAttack(){
         }else{
             Show("Auto Attack : ", "ON", "")
             ControlClick(,DDAexe, , HeroAbilities[hero]["A"], , "D")
-        }
-    }
-}
-
-CleanWrench(){
-    if State.ToggleRepair
-    {
-        CheckColorFuzzy("wrench",WindowOffset(Resolutions[Res].Repair), RepairColors, 300)
-        if(PixelValues["wrench"].s != 0){
-            ControlClick(,DDAexe, , "RIGHT") 
         }
     }
 }
@@ -362,6 +384,7 @@ F10:: ToggleState("ToggleHeroBuff", "Auto Hero Buff")
 F11:: ToggleState("ToggleTowerBuff", "Auto Tower Buff") 
 
 Update()
+SetFont(DesiredFont)
 
 SetTimer(Scan, 250)
 SetTimer(Logic, 50)
@@ -431,7 +454,7 @@ Logic(){
                         }
                     } 
                 }
-                ;else if A_TickCount > LastC + HeroAbilities[hero].C.AnimT + HeroAbilities[hero].C.Recast {
+                ; else if A_TickCount > LastC + HeroAbilities[hero].C.AnimT + HeroAbilities[hero].C.Recast {
                 ;     Only used by rogue hop, scripted movement not supported
                 ;}
             }
@@ -454,7 +477,7 @@ Logic(){
         if State.ToggleRepair && A_Tickcount > State.NextInput + 300 
             Repair()
     }
-    if(phase == "mapover") {
+    if(phase == "mapover" || State.PostMapover == 1) {
 	    if State.ToggleSummaryShutdown {
             G()
 	    	ShutdownTimer()

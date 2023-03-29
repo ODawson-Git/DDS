@@ -1,3 +1,7 @@
+230329:
+- Added font changing support
+- Fixed summary shutdown bugs
+
 230328:
 - Added summary shutdown
 - Added temporary support for Guardian|

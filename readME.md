@@ -17,6 +17,8 @@ The script reads colors on screen to know current game phase and hero being play
 - 1280x720
 - 960x540
 
+You can change GUI font on line ~23
+
 <sub>If you would like to contribute to the supported resolutions follow this [guide](https://github.com/ODawson-Git/DDS/blob/main/resolutionContribution.md)</sub>
 
 ## Keybinds
