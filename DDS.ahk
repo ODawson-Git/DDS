@@ -383,8 +383,8 @@ F9:: ToggleState("AutoG", "Auto G", 1)
 F10:: ToggleState("ToggleHeroBuff", "Auto Hero Buff") 
 F11:: ToggleState("ToggleTowerBuff", "Auto Tower Buff") 
 
-Update()
 SetFont(DesiredFont)
+Update()
 
 SetTimer(Scan, 250)
 SetTimer(Logic, 50)
