@@ -70,7 +70,7 @@ You can change GUI font on line ~23
 - Rouge - RMB
 - Warden - LMB
 - Summoner - Toggle Auto repair mouse mode
-- Guardian -
+- Guardian - LMB
 
 <sub>Currently, `Auto repair mouse mode` only works on Windows scaling 100%</sub>
 
