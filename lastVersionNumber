@@ -1,3 +1,9 @@
+230428:
+- Added proper support for Guardian
+- Tuned hero colours, msg me if issue
+- Added steam screenshot to summary shutdown
+- Added rouge autocarnage, umbral change cooldown line ~94|
+
 230329:
 - Added font changing support
 - Fixed summary shutdown bugs|

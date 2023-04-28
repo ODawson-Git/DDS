@@ -27,7 +27,7 @@ You can change GUI font on line ~23
 
 **Ctrl+Alt+R**: Resizes DDA to 960x540 (change on line ~320)
 
-**Ctrl+Alt+T**: Ends map and shuts down PC on summary phase
+**Ctrl+Alt+T**: Ends map, takes screenshot and shuts down PC on summary phase
 
 **F7**: Enable debug  
 
@@ -35,7 +35,7 @@ You can change GUI font on line ~23
 
 **Ctrl+F8** Enable mana dump
 
-**F9**: Auto G 
+**F9**: Auto G (not wave 1)
 
 **Ctrl+F9**: Toggles between force G and solo G
 
@@ -45,7 +45,8 @@ You can change GUI font on line ~23
 - Squire - Blood Boil
 - Huntress - Adrenaline Rush
 - EV - 
-- Rouge -
+- Rouge - Umbral Form and Carnage (not wave 1)
+<sub>^ Change line ~94 delay to the greatest cooldown of the two</sub>
 - Warden - Wrath
 - Summoner - Pet Boost
 - Guardian - Divine Protection

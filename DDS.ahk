@@ -1,7 +1,7 @@
 #SingleInstance Force
 #Requires AutoHotkey v2.0-beta
 
-v := 230328 ;YYMMDD
+v := 230329 ;YYMMDD
 
 objindexget(obj,key) { 
     if obj.HasOwnProp(key) 
@@ -38,16 +38,17 @@ State := {  AutoG : false,
             NextM : 0,
             NextG : 0,
             NextM2 : 0,
+            NextTowerPlace: 0,
             NextInput : 0,
             lastphase : "0"}
 
 Resolutions := {
-    3072x1920:  {Phase:{x:2962,y:113}, Hero:{x:74,y:143}, Toggle:{x:2601,y:1487}, Repair:{x:1560, y:945}, MouseRepairOffset:{x:-3, y:-3}},
+    3072x1920:  {Phase:{x:2962,y:113}, Hero:{x:83,y:143}, Toggle:{x:2600,y:1488}, Repair:{x:1560, y:945}, MouseRepairOffset:{x:-3, y:-3}},
     3440x1440:  {Phase:{x:3332,y:88}, Hero:{x:58,y:115}, Toggle:{x:3034,y:1113}, Repair:{x:1730, y:702}, MouseRepairOffset:{x:-3, y:-3}}, 
     2560x1440:  {Phase:{x:2469,y:81}, Hero:{x:56,y:109}, Toggle:{x:2192,y:1116}, Repair:{x:2196, y:687}, MouseRepairOffset:{x:-2, y:-2}},
     1920x1080:  {Phase:{x:1853,y:63}, Hero:{x:44,y:82}, Toggle:{x:1645,y:837}, Repair:{x:973, y:531}, MouseRepairOffset:{x:-1, y:-1}},
     1280x720:   {Phase:{x:1235,y:40}, Hero:{x:29,y:53}, Toggle:{x:1096,y:558}, Repair:{x:649, y:355}, MouseRepairOffset:{x:-1, y:-1}},
-    960x540:   {Phase:{x:927,y:30}, Hero:{x:21,y:41}, Toggle:{x:822,y:419}, Repair:{x:487, y:266}, MouseRepairOffset:{x:-1, y:-1}}
+    960x540:   {Phase:{x:927,y:30}, Hero:{x:21,y:41}, Toggle:{x:821,y:420}, Repair:{x:487, y:266}, MouseRepairOffset:{x:-1, y:-1}}
 }
 
 PhaseColors := {
@@ -80,7 +81,7 @@ HeroColors := {
     warden:      {R: 85,        G: 75,          B: 79,    Rm: 57,      Gm: 53,     Bm: 64 }, 
     rogue:       {R: 87,        G: 5,           B: 54,    Rm: 64,      Gm: 14,     Bm: 54 }, 
     summoner:    {R: 54,        G: 52,          B: 85,    Rm: 46,      Gm: 40,     Bm: 72 },
-    guardian:    {R: 252,       G: 151,         B: 0,     Rm: 190,     Gm: 140,    Bm: 10 },
+    guardian:    {R: 42,       G: 24,         B: 12,     Rm: 111,     Gm: 65,    Bm: 23 },
 }
 
 HeroAbilities := {
@@ -89,8 +90,8 @@ HeroAbilities := {
     squire:     {A: "LEFT",                                                     C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}}, 
     huntress:   {A: "LEFT",                                                     C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}}, 
     ev:         {A: "LEFT"},    
-    warden:     {A: "LEFT",                                                     C: {Type: "Both", AnimT: 500, Recast: "Toggle"}}, 
-    rogue:      {A: "LEFT"}, 
+    warden:     {A: "LEFT",                                                     C: {Type: "Both", AnimT: 1000, Recast: "Toggle"}}, 
+    rogue:      {A: "LEFT",     TOWER: {Type: "Hero", Numbers: [4, 5], Delay: 15000}},                                                    
     summoner:   {A: "Repair",   F: {Type: "Tower", AnimT: 2000, Recast: 5100},  C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}},
     guardian:   {A: "LEFT",                                                     C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}}
 }
@@ -262,6 +263,7 @@ ShutdownTimer(){ ; 0 = not started, 1 = started, 2 = cancelled
     }
 
     if (A_TickCount > State.NextShutdown && State.PostMapover == 1) {
+        ControlSend("{Blind}{F12}", , DDAexe)
         Shutdown 1
     }
 
@@ -316,6 +318,21 @@ M(){
             ControlSend("{Blind}{m up}", , DDAexe)
         }
         SetTimer(ManaUp,-550)
+    }
+}
+
+PlaceTowers(hero){
+    if A_TickCount > State.NextTowerPlace
+    {
+        State.NextTowerPlace := A_TickCount + HeroAbilities[hero]["TOWER"].Delay + 2500
+        State.NextG := A_TickCount + HeroAbilities[hero]["TOWER"].Delay
+        SetTimer(Place, -HeroAbilities[hero]["TOWER"].Delay)
+
+        Place(){
+            for i, towernumber in HeroAbilities[hero]["TOWER"].Numbers
+                ControlSend("{Blind}{" . towernumber . "}", , DDAexe)
+        }
+
     }
 }
 
@@ -399,7 +416,7 @@ Scan(){
     if (PixelValues["phase"].s != "combat" && PixelValues["phase"].s != "boss") || 
         (PixelValues["phase"].s == "combat" && State.lastphase != "combat") || 
         (PixelValues["phase"].s == "boss" && (State.lastphase != "combat" || State.lastphase != "boss"))
-        CheckColorFuzzy("hero",WindowOffset(Resolutions[Res].Hero), HeroColors)
+        CheckColorFuzzy("hero",WindowOffset(Resolutions[Res].Hero), HeroColors, 300)
         CheckColorFuzzy("toggle",WindowOffset(Resolutions[Res].Toggle), ToggleColors)
     global hero := PixelValues["hero"].s
     State.lastphase := PixelValues["phase"].s
@@ -410,6 +427,13 @@ Logic(){
 	if WindowCoords.init == 0 || initialscan == 0
 		return
     phase := PixelValues["phase"].s
+    hero := PixelValues["hero"].s
+    if hero == 0 {
+        if State.ToggleDebug {
+            ShowDebug()
+        }
+        return
+    }
     if(phase == "loading") {
         ControlSend("{Blind}{Space}", , DDAexe)
         if State.AutoG{
@@ -422,11 +446,17 @@ Logic(){
             State.PostWarmup := true
         }
     } else if(phase == "build"){
-        if State.PostWarmup == false
+        if State.PostWarmup == false {
+            if HeroAbilities[hero]["TOWER"] {
+                if HeroAbilities[hero]["TOWER"].Type == "Hero" && State.ToggleHeroBuff { ; Others are not currently added
+                    CleanWrench()
+                    PlaceTowers(hero)
+                }
+            }
 			G()
             M()
+        }
     }
-    hero := PixelValues["hero"].s
     if(phase == "combat" || phase == "boss" || phase == "tavern") {
         State.PostWarmup := false
         State.PostMapover := 0
