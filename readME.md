@@ -17,27 +17,29 @@ The script reads colors on screen to know current game phase and hero being play
 - 1280x720
 - 960x540
 
-You can change GUI font on line ~23
-
 <sub>If you would like to contribute to the supported resolutions follow this [guide](https://github.com/ODawson-Git/DDS/blob/main/resolutionContribution.md)</sub>
 
 ## Keybinds
 
-**Ctrl+Del**: Kills the script
+<sub>**B** Indicates being able to do blind i.e. when script not on screen</sub>
 
-**Ctrl+Alt+R**: Resizes DDA to 960x540 (change on line ~320)
+---
+
+**Ctrl+Del**: Kills the script (**B**)
+
+**Ctrl+Alt+R**: Resizes DDA to 960x540 (change on line ~320) (**B**)
 
 **Ctrl+Alt+T**: Ends map, takes screenshot and shuts down PC on summary phase
 
-**F7**: Enable debug  
+**F7**: Enable debug (**B**)
 
 **F8**: Auto repair 
 
 **Ctrl+F8** Enable mana dump
 
-**F9**: Auto G (not wave 1)
+**F9**: Auto G (not wave 1) (**B**)
 
-**Ctrl+F9**: Toggles between force G and solo G
+**Ctrl+F9**: Toggles between force G and solo G (**B**)
 
 **F10**: Hero buff spam
 - Monk - Hero Boost
@@ -45,21 +47,21 @@ You can change GUI font on line ~23
 - Squire - Blood Boil
 - Huntress - Adrenaline Rush
 - EV - 
-- Rouge - Umbral Form and Carnage (not wave 1)
+- Rouge - Umbral Form and Carnage (not wave 1) 
 <sub>^ Change line ~94 delay to the greatest cooldown of the two</sub>
 - Warden - Wrath
 - Summoner - Pet Boost
 - Guardian - Divine Protection
 
-**F11**: Tower buff spam
-- Monk - Tower boost,  
-- Apprentice - Hero boost & right click,   
+**F11**: Tower buff spam 
+- Monk - Tower boost (**B**)
+- Apprentice - Hero boost & right click (**B**)
 - Squire - 
 - Huntress - 
 - EV - 
 - Rouge - 
 - Warden - Wrath
-- Summoner - Flash Heal
+- Summoner - Flash Heal (**B**)
 - Guardian -
 
 **Ctrl+RMB**: Auto fire. 

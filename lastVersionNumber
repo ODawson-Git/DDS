@@ -1,3 +1,8 @@
+230510:
+- Made auto attack hotkey only work when tabbed into DDA
+- Added 'Blind' mode for phase and toggle. You should no longer need DDA
+visible for common functionality of these, full compatability is in README| 
+
 230428:
 - Added proper support for Guardian
 - Tuned hero colours, msg me if issue

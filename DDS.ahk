@@ -1,7 +1,7 @@
 #SingleInstance Force
 #Requires AutoHotkey v2.0-beta
 
-v := 230329 ;YYMMDD
+v := 230510 ;YYMMDD
 
 objindexget(obj,key) { 
     if obj.HasOwnProp(key) 
@@ -20,7 +20,6 @@ CoordMode("Pixel", "Screen")
 CoordMode("Mouse", "Screen")
 
 DDAexe := "ahk_exe DDS-Win64-Shipping.exe" ; You can use Window Spy to see the exe name
-DesiredFont := "Arial" ; DDA uses 'Poppins' font (you will have to install it)
 
 State := {  AutoG : false,
             ToggleHeroBuff : false,
@@ -37,7 +36,6 @@ State := {  AutoG : false,
             NextC : 0,
             NextM : 0,
             NextG : 0,
-            NextM2 : 0,
             NextTowerPlace: 0,
             NextInput : 0,
             lastphase : "0"}
@@ -85,7 +83,7 @@ HeroColors := {
 }
 
 HeroAbilities := {
-    apprentice: {A: "LEFT",                                                     C: {Type: "Tower", AnimT: 1500, Recast: "M2Toggle", M2AnimT: 1500, M2Recast: 7000}}, 
+    apprentice: {A: "LEFT",                                                     C: {Type: "Tower", AnimT: 1500, Recast: "M2Toggle", Cooldown: 5500, M2AnimT: 1500, M2Recast: 7000}}, 
     monk:       {A: "RIGHT",    F: {Type: "Tower", AnimT: 500, Recast: 19000},  C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}}, 
     squire:     {A: "LEFT",                                                     C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}}, 
     huntress:   {A: "LEFT",                                                     C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}}, 
@@ -127,29 +125,6 @@ GetMousePos(offset:= 0){ ; only works on Windows Scaling 100%
     return {x: MouseX + offset.x, y: MouseY + offset.y}
 }
 
-
-IsFont(FontName){
-	Loop Reg, "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"
-	{
-		If (RegExMatch(A_LoopRegName, "^" . FontName . " \(") > 0)
-		{
-			Return true
-		}
-	}
-	Return false
-}
-
-SetFont(DesiredFont){
-    global Font
-    if IsFont(DesiredFont) {
-        Font := DesiredFont
-    }
-    else{
-        Font := "Arial"
-        MsgBox("Font not found: " DesiredFont  ". Using Arial instead.", , )
-    }
-}
-
 global PixelValues := Map()
 
 CheckColorFuzzy(Varname, Coord, Table, Threshold := 16581375) {
@@ -175,6 +150,11 @@ CheckColorFuzzy(Varname, Coord, Table, Threshold := 16581375) {
     PixelValues[Varname] := {s: Ret, r: R, g: G, b: B, x: Coord.x, y: Coord.y, u: A_TickCount}
 }
 
+WinGetAtCoords(coords) {
+    WinID := DllCall("WindowFromPoint", "UInt64", (coords.x & 0xFFFFFFFF) | (coords.y << 32), "Ptr")
+    return "ahk_exe " WinGetProcessName(WinID)
+}
+
 GUIColors := {
 	backcolor:      "C25292E", 
 	information:    "C60D9EF", 
@@ -183,27 +163,29 @@ GUIColors := {
 }
 
 ShowDebug(){
-    ShowGUI := Gui()
-    ShowGUI.Opt("+AlwaysOnTop -Caption +ToolWindow -DPIScale")
-    ShowGUI.SetFont("s11", Font)
-    ShowGUI.BackColor := GUIColors.backcolor
-    for k, v in PixelValues
-        ShowGUI.Add("Text", GUIColors.information, k "  -  " v.s "      " v.r "  " v.g "  " v.b "      " Round(v.x) "  " Round(v.y) "      " v.u)
-    for k, v in State.OwnProps()
-        ShowGUI.Add("Text", v ? GUIColors.ON : GUIColors.OFF, k "  -  " v)
-    ShowGUI.Show("y" A_ScreenHeight " NoActivate") ; Show out of viewing area to get dimensions
-    ShowGUI.GetPos(, , &GWidth, &GHeight) ; GetPos only works when GUI active
-    ShowGUI.Move(WindowCoords.x, WindowCoords.y + WindowCoords.h*0.5 - GHeight*0.5)
-    Cleanup(){
-        ShowGUI.Destroy() 
+    if State.ToggleDebug {
+        ShowGUI := Gui()
+        ShowGUI.Opt("+AlwaysOnTop -Caption +ToolWindow -DPIScale")
+        ShowGUI.SetFont("s11")
+        ShowGUI.BackColor := GUIColors.backcolor
+        for k, v in PixelValues
+            ShowGUI.Add("Text", GUIColors.information, k "  -  " v.s "      " v.r "  " v.g "  " v.b "      " Round(v.x) "  " Round(v.y) "      " v.u)
+        for k, v in State.OwnProps()
+            ShowGUI.Add("Text", v ? GUIColors.ON : GUIColors.OFF, k "  -  " v)
+        ShowGUI.Show("y" A_ScreenHeight " NoActivate") ; Show out of viewing area to get dimensions
+        ShowGUI.GetPos(, , &GWidth, &GHeight) ; GetPos only works when GUI active
+        ShowGUI.Move(WindowCoords.x, WindowCoords.y + WindowCoords.h*0.5 - GHeight*0.5)
+        Cleanup(){
+            ShowGUI.Destroy() 
+        }
+        SetTimer(Cleanup,-100)
     }
-    SetTimer(Cleanup,-100)
 }
 
 Show(text, state, text2){
     ShowGUI := Gui()
     ShowGUI.Opt("+AlwaysOnTop -Caption +ToolWindow -DPIScale")
-    ShowGUI.SetFont("s11", Font)
+    ShowGUI.SetFont("s11")
     ShowGUI.BackColor := GUIColors.backcolor
     ShowGUI.Add("Text", GUIColors.%state%, text state text2)
     ShowGUI.Show(" y -100" " NoActivate") ; Show out of viewing area to get dimensions
@@ -225,7 +207,7 @@ Update(){
             ;make gui
             UpdateGUI := Gui("-Theme")
             UpdateGUI.Opt("+AlwaysOnTop -Caption +ToolWindow")
-            UpdateGUI.SetFont("s11", Font)
+            UpdateGUI.SetFont("s11")
             UpdateGUI.BackColor := GUIColors.backcolor
             UpdateGUI.Add("Text", GUIColors.information, "New feature(s) added:")
             changelog:= StrSplit(newVerSplit[2], "|")[1]
@@ -252,7 +234,7 @@ ShutdownTimer(){ ; 0 = not started, 1 = started, 2 = cancelled
     if (State.PostMapover == 0) {
         ShutdownGUI := Gui("-Theme")
         ShutdownGUI.Opt("+AlwaysOnTop -Caption +ToolWindow -DPIScale")
-        ShutdownGUI.SetFont("s11", Font)
+        ShutdownGUI.SetFont("s11")
         ShutdownGUI.BackColor := GUIColors.backcolor
         ShutdownGUI.Add("Button", GUIColors.information " Background" SubStr(GUIColors.backcolor, 2, 6) " " , "Cancel").OnEvent("Click", Cancel)
         ShutdownGUI.Show(" y -100") ; Show out of viewing area to get dimensions
@@ -339,7 +321,6 @@ PlaceTowers(hero){
 CleanWrench(){
     if State.ToggleRepair
     {
-        UpdateWrench()
         if(PixelValues["wrench"].s != 0){
             ControlClick(,DDAexe, , "RIGHT") 
         }
@@ -351,11 +332,10 @@ UpdateWrench(){
         CheckColorFuzzy("wrench",GetMousePos(Resolutions[Res].MouseRepairOffset), RepairColors, 300)
     }else{
         CheckColorFuzzy("wrench",WindowOffset(Resolutions[Res].Repair), RepairColors, 300)
-    } 
+    }
 }
 
 Repair(){
-    UpdateWrench()
     if(PixelValues["wrench"].s == 0){
         ControlSend("{Blind}{r}", , DDAexe)
     }
@@ -364,7 +344,6 @@ Repair(){
         SetTimer(Cleanup,-200) ; 200ms max repair time (has to be less than timer for Repair())
 
         Cleanup(){
-            UpdateWrench()
             if(PixelValues["wrench"].s != 0){
                 ControlClick(,DDAexe, , "RIGHT") 
             }
@@ -373,6 +352,7 @@ Repair(){
 }
 
 AutoAttack(){
+    hero := PixelValues["hero"].s
     if HeroAbilities[hero]["A"]{
         if HeroAbilities[hero]["A"] == "Repair"{
             ToggleState("ToggleMouseRepair", "Mouse Repair")
@@ -388,10 +368,10 @@ ToggleState(statestr, text, terinary := 1) {
     Show(text " : ", State.%statestr% ? "ON":"OFF", "")
 }
 
+^DEL:: ExitApp
 ^!R:: Resize(960, 540)
 ^!T:: ToggleState("ToggleSummaryShutdown", "Summary Shutdown")
 ^RButton:: AutoAttack()
-^DEL:: ExitApp
 F7:: ToggleState("ToggleDebug", "Debug")
 F8:: ToggleState("ToggleRepair", "Auto Repair") 
 ^F8:: ToggleState("ToggleManaDump", "Auto Dump Mana")
@@ -399,8 +379,9 @@ F9:: ToggleState("AutoG", "Auto G", 1)
 ^F9:: ToggleState("AutoG", "Force G", 2)
 F10:: ToggleState("ToggleHeroBuff", "Auto Hero Buff") 
 F11:: ToggleState("ToggleTowerBuff", "Auto Tower Buff") 
+#HotIf WinActive(DDAexe)
+^RButton:: AutoAttack()
 
-SetFont(DesiredFont)
 Update()
 
 SetTimer(Scan, 250)
@@ -412,15 +393,40 @@ Scan(){
     GetWindowCoords()
 	if WindowCoords.init == 0
 		return
-    CheckColorFuzzy("phase",WindowOffset(Resolutions[Res].Phase), PhaseColors, 600) 
-    if (PixelValues["phase"].s != "combat" && PixelValues["phase"].s != "boss") || 
-        (PixelValues["phase"].s == "combat" && State.lastphase != "combat") || 
-        (PixelValues["phase"].s == "boss" && (State.lastphase != "combat" || State.lastphase != "boss"))
-        CheckColorFuzzy("hero",WindowOffset(Resolutions[Res].Hero), HeroColors, 300)
+    if !(WinGetAtCoords(WindowOffset(Resolutions[Res].Phase)) == DDAexe){
+        if initialscan == 1{
+            if PixelValues["phase"].s != "blind"{
+                Show("Blind Phase : ", "ON", "")
+                PixelValues["phase"].s := "blind"
+            }
+        }
+    } else {
+        CheckColorFuzzy("phase",WindowOffset(Resolutions[Res].Phase), PhaseColors, 600) 
+        State.lastphase := PixelValues["phase"].s
+    }
+    if !(WinGetAtCoords(WindowOffset(Resolutions[Res].Toggle)) == DDAexe){
+        if initialscan == 1{
+            if PixelValues["toggle"].s != "blind"{
+                Show("Blind Toggle : ", "ON", "")
+                PixelValues["toggle"].s := "blind"
+            }
+        }
+    } else {
         CheckColorFuzzy("toggle",WindowOffset(Resolutions[Res].Toggle), ToggleColors)
-    global hero := PixelValues["hero"].s
-    State.lastphase := PixelValues["phase"].s
-    global initialscan := 1
+    }
+    if (WinGetAtCoords(WindowOffset(Resolutions[Res].Repair)) == DDAexe){
+        UpdateWrench()
+    }
+    if !(WinGetAtCoords(WindowOffset(Resolutions[Res].Hero)) == DDAexe){
+        return
+    } else {
+        if (PixelValues["phase"].s != "combat" && PixelValues["phase"].s != "boss") || 
+            (PixelValues["phase"].s == "combat" && State.lastphase != "combat") || 
+            (PixelValues["phase"].s == "boss" && (State.lastphase != "combat" || State.lastphase != "boss")) {
+                CheckColorFuzzy("hero",WindowOffset(Resolutions[Res].Hero), HeroColors, 300)
+                global initialscan := 1
+            }
+    }
 }
 
 Logic(){
@@ -429,9 +435,7 @@ Logic(){
     phase := PixelValues["phase"].s
     hero := PixelValues["hero"].s
     if hero == 0 {
-        if State.ToggleDebug {
-            ShowDebug()
-        }
+        ShowDebug()
         return
     }
     if(phase == "loading") {
@@ -457,43 +461,62 @@ Logic(){
             M()
         }
     }
-    if(phase == "combat" || phase == "boss" || phase == "tavern") {
-        State.PostWarmup := false
+    if(phase == "combat" || phase == "boss" || phase == "tavern" || phase == "blind") {
         State.PostMapover := 0
+        if phase == "combat" || phase == "boss" {
+            State.PostWarmup := false
+        }
+        if phase == "blind" && State.PostWarmup == false{
+            G()
+        }
         if HeroAbilities[hero]["C"] {
             if (HeroAbilities[hero].C.Type == "Tower" && State.ToggleTowerBuff) || 
 			   (HeroAbilities[hero].C.Type == "Hero" && State.ToggleHeroBuff) || 
 			   (HeroAbilities[hero].C.Type == "Both" && (State.ToggleHeroBuff || State.ToggleTowerBuff)) {
-                if HeroAbilities[hero].C.Recast == "Toggle" || HeroAbilities[hero].C.Recast == "M2Toggle" {
-                    if PixelValues["toggle"].s == "off" && A_TickCount > State.NextInput {
-                        CleanWrench()
-                        ControlSend("{Blind}{c}", , DDAexe)
-                        State.NextInput := A_TickCount + HeroAbilities[hero].C.AnimT
-                    }
-                    if PixelValues["toggle"].s == "on" && HeroAbilities[hero].C.Recast == "M2Toggle" && A_TickCount > State.NextM2 && A_TickCount > State.NextInput{
-                        CleanWrench()
-                        ControlClick(,DDAexe, , "RIGHT")
-                        State.NextInput := A_TickCount + HeroAbilities[hero].C.M2AnimT
-
-                        SetTimer(DeBoost, - HeroAbilities[hero].C.M2AnimT)
-                        State.NextM2 := A_TickCount + HeroAbilities[hero].C.M2Recast + HeroAbilities[hero].C.M2AnimT 
-
-                        DeBoost(){
+                if (HeroAbilities[hero].C.Recast == "Toggle" || HeroAbilities[hero].C.Recast == "M2Toggle"){
+                    if PixelValues["toggle"].s != "blind" {
+                        if PixelValues["toggle"].s == "off" && A_TickCount > State.NextInput {
                             CleanWrench()
                             ControlSend("{Blind}{c}", , DDAexe)
+                            State.NextInput := A_TickCount + HeroAbilities[hero].C.AnimT
                         }
-                    } 
+                        if PixelValues["toggle"].s == "on" && HeroAbilities[hero].C.Recast == "M2Toggle" && A_TickCount > State.NextC && A_TickCount > State.NextInput{
+                            CleanWrench()
+                            M2()
+                            SetTimer(DeBoost, - HeroAbilities[hero].C.M2AnimT)
+
+                            State.NextInput := A_TickCount + HeroAbilities[hero].C.M2AnimT
+                            State.NextC := A_TickCount + HeroAbilities[hero].C.M2Recast + HeroAbilities[hero].C.M2AnimT 
+
+                            DeBoost(){
+                                CleanWrench()
+                                ControlSend("{Blind}{c}", , DDAexe)
+                            }
+
+                            M2(){
+                                CleanWrench()
+                                ControlClick(,DDAexe, , "RIGHT")
+                            }
+                        }
+                    }
+                    else{
+                        if HeroAbilities[hero].C.Recast == "M2Toggle" && A_TickCount > State.NextC && A_TickCount > State.NextInput {
+                            ControlSend("{Blind}{c}", , DDAexe)
+                            SetTimer(M2, - HeroAbilities[hero].C.AnimT)
+                            SetTimer(DeBoost, - (HeroAbilities[hero].C.AnimT + HeroAbilities[hero].C.M2AnimT))
+
+                            State.NextC := A_TickCount + HeroAbilities[hero].C.AnimT + HeroAbilities[hero].C.M2AnimT + HeroAbilities[hero].C.Cooldown
+                            State.NextInput := A_TickCount + HeroAbilities[hero].C.AnimT + HeroAbilities[hero].C.M2AnimT + HeroAbilities[hero].C.Cooldown
+                        }
+                    }
                 }
-                ; else if A_TickCount > LastC + HeroAbilities[hero].C.AnimT + HeroAbilities[hero].C.Recast {
-                ;     Only used by rogue hop, scripted movement not supported
-                ;}
             }
         }
         if HeroAbilities[hero]["F"] {
 			if (HeroAbilities[hero].F.Type == "Tower" && State.ToggleTowerBuff) || 
 			   (HeroAbilities[hero].F.Type == "Hero" && State.ToggleHeroBuff) || 
 			   (HeroAbilities[hero].F.Type == "Both" && (State.ToggleHeroBuff || State.ToggleTowerBuff)) {
-				if HeroAbilities[hero].F.Recast == "Toggle" || HeroAbilities[hero].F.Recast == "M2Toggle" {
+				if (HeroAbilities[hero].F.Recast == "Toggle" || HeroAbilities[hero].F.Recast == "M2Toggle"){
 					; These don't currently exist ingame
 				}
 				else if A_TickCount > State.NextF && A_TickCount > State.NextInput {
@@ -504,8 +527,9 @@ Logic(){
 				}
 			}
         }
-        if State.ToggleRepair && A_Tickcount > State.NextInput + 300 
+        if State.ToggleRepair && A_Tickcount > State.NextInput + 300 {
             Repair()
+        }
     }
     if(phase == "mapover" || State.PostMapover == 1) {
 	    if State.ToggleSummaryShutdown {
@@ -515,6 +539,5 @@ Logic(){
     }
     if State.PostMapover == 1
         Show("Shutting down in " Round((State.NextShutdown - A_TickCount) / 1000, 2) " seconds : ", "information",  "")
-    if State.ToggleDebug
-        ShowDebug()
+    ShowDebug()
 }
