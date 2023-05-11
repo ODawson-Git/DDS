@@ -1,7 +1,7 @@
 #SingleInstance Force
 #Requires AutoHotkey v2.0-beta
 
-v := 230510 ;YYMMDD
+v := 230511 ;YYMMDD
 
 objindexget(obj,key) { 
     if obj.HasOwnProp(key) 
@@ -388,6 +388,10 @@ SetTimer(Scan, 250)
 SetTimer(Logic, 50)
 
 global initialscan := 0
+global phasescan := 0
+global heroscan := 0
+global togglescan := 0
+
 
 Scan(){
     GetWindowCoords()
@@ -403,6 +407,7 @@ Scan(){
     } else {
         CheckColorFuzzy("phase",WindowOffset(Resolutions[Res].Phase), PhaseColors, 600) 
         State.lastphase := PixelValues["phase"].s
+        global phasescan := 1
     }
     if !(WinGetAtCoords(WindowOffset(Resolutions[Res].Toggle)) == DDAexe){
         if initialscan == 1{
@@ -413,6 +418,7 @@ Scan(){
         }
     } else {
         CheckColorFuzzy("toggle",WindowOffset(Resolutions[Res].Toggle), ToggleColors)
+        global togglescan := 1
     }
     if (WinGetAtCoords(WindowOffset(Resolutions[Res].Repair)) == DDAexe){
         UpdateWrench()
@@ -420,18 +426,25 @@ Scan(){
     if !(WinGetAtCoords(WindowOffset(Resolutions[Res].Hero)) == DDAexe){
         return
     } else {
-        if (PixelValues["phase"].s != "combat" && PixelValues["phase"].s != "boss") || 
-            (PixelValues["phase"].s == "combat" && State.lastphase != "combat") || 
-            (PixelValues["phase"].s == "boss" && (State.lastphase != "combat" || State.lastphase != "boss")) {
-                CheckColorFuzzy("hero",WindowOffset(Resolutions[Res].Hero), HeroColors, 300)
-                global initialscan := 1
-            }
+        if phasescan{
+            if (PixelValues["phase"].s != "combat" && PixelValues["phase"].s != "boss") || 
+                (PixelValues["phase"].s == "combat" && State.lastphase != "combat") || 
+                (PixelValues["phase"].s == "boss" && (State.lastphase != "combat" || State.lastphase != "boss")) {
+                    CheckColorFuzzy("hero",WindowOffset(Resolutions[Res].Hero), HeroColors, 300)
+                    global heroscan := 1
+                }
+        }
+    }
+    if heroscan && phasescan && togglescan {
+        global initialscan := 1
     }
 }
 
 Logic(){
-	if WindowCoords.init == 0 || initialscan == 0
+	if WindowCoords.init == 0 || initialscan == 0 {
+        ShowDebug()
 		return
+    }
     phase := PixelValues["phase"].s
     hero := PixelValues["hero"].s
     if hero == 0 {
