@@ -1,3 +1,9 @@
+230514:
+- Fixed DumpMana not dumping after warmup
+- Fixed SummaryShutdown being unreliable
+- Moved hero colour picking position
+- Improved debug window|
+
 230511:
 - Bugfix with initally opening the script|
 

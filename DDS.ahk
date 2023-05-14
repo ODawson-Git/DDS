@@ -1,7 +1,7 @@
 #SingleInstance Force
 #Requires AutoHotkey v2.0-beta
 
-v := 230511 ;YYMMDD
+v := 230514 ;YYMMDD
 
 objindexget(obj,key) { 
     if obj.HasOwnProp(key) 
@@ -21,7 +21,7 @@ CoordMode("Mouse", "Screen")
 
 DDAexe := "ahk_exe DDS-Win64-Shipping.exe" ; You can use Window Spy to see the exe name
 
-State := {  AutoG : false,
+State := {  ToggleAutoG : 0,
             ToggleHeroBuff : false,
             ToggleTowerBuff : false,
             ToggleRepair : false,
@@ -41,12 +41,12 @@ State := {  AutoG : false,
             lastphase : "0"}
 
 Resolutions := {
-    3072x1920:  {Phase:{x:2962,y:113}, Hero:{x:83,y:143}, Toggle:{x:2600,y:1488}, Repair:{x:1560, y:945}, MouseRepairOffset:{x:-3, y:-3}},
-    3440x1440:  {Phase:{x:3332,y:88}, Hero:{x:58,y:115}, Toggle:{x:3034,y:1113}, Repair:{x:1730, y:702}, MouseRepairOffset:{x:-3, y:-3}}, 
-    2560x1440:  {Phase:{x:2469,y:81}, Hero:{x:56,y:109}, Toggle:{x:2192,y:1116}, Repair:{x:2196, y:687}, MouseRepairOffset:{x:-2, y:-2}},
-    1920x1080:  {Phase:{x:1853,y:63}, Hero:{x:44,y:82}, Toggle:{x:1645,y:837}, Repair:{x:973, y:531}, MouseRepairOffset:{x:-1, y:-1}},
-    1280x720:   {Phase:{x:1235,y:40}, Hero:{x:29,y:53}, Toggle:{x:1096,y:558}, Repair:{x:649, y:355}, MouseRepairOffset:{x:-1, y:-1}},
-    960x540:   {Phase:{x:927,y:30}, Hero:{x:21,y:41}, Toggle:{x:821,y:420}, Repair:{x:487, y:266}, MouseRepairOffset:{x:-1, y:-1}}
+    3072x1920:  {Phase:{x:2962,y:113}, Hero:{x:65,y:149}, Toggle:{x:2600,y:1488}, Repair:{x:1560, y:945}, MouseRepairOffset:{x:-3, y:-3}},
+    3440x1440:  {Phase:{x:3332,y:88}, Hero:{x:41,y:113}, Toggle:{x:3034,y:1113}, Repair:{x:1730, y:702}, MouseRepairOffset:{x:-3, y:-3}}, 
+    2560x1440:  {Phase:{x:2469,y:81}, Hero:{x:48,y:113}, Toggle:{x:2192,y:1116}, Repair:{x:2196, y:687}, MouseRepairOffset:{x:-2, y:-2}},
+    1920x1080:  {Phase:{x:1853,y:63}, Hero:{x:35,y:83}, Toggle:{x:1645,y:837}, Repair:{x:973, y:531}, MouseRepairOffset:{x:-1, y:-1}},
+    1280x720:   {Phase:{x:1235,y:40}, Hero:{x:24,y:57}, Toggle:{x:1096,y:558}, Repair:{x:649, y:355}, MouseRepairOffset:{x:-1, y:-1}},
+    960x540:    {Phase:{x:927,y:30}, Hero:{x:18,y:43}, Toggle:{x:821,y:420}, Repair:{x:487, y:266}, MouseRepairOffset:{x:-1, y:-1}}
 }
 
 PhaseColors := {
@@ -71,15 +71,15 @@ RepairColors := {
 }
 
 HeroColors := {
-    apprentice:  {R: 2,         G: 131,         B: 204,   Rm: 15,      Gm: 87,     Bm: 141}, 
-    monk:        {R: 229,       G: 102,         B: 32,    Rm: 148,     Gm: 70,     Bm: 41 }, 
-    squire:      {R: 165,       G: 18,          B: 18,    Rm: 110,     Gm: 21,     Bm: 32 }, 
-    huntress:    {R: 0,         G: 127,         B: 57,    Rm: 13,      Gm: 84,     Bm: 55 }, 
-    ev:          {R: 122,       G: 31,          B: 185,   Rm: 85,      Gm: 29,     Bm: 130}, 
-    warden:      {R: 85,        G: 75,          B: 79,    Rm: 57,      Gm: 53,     Bm: 64 }, 
-    rogue:       {R: 87,        G: 5,           B: 54,    Rm: 64,      Gm: 14,     Bm: 54 }, 
-    summoner:    {R: 54,        G: 52,          B: 85,    Rm: 46,      Gm: 40,     Bm: 72 },
-    guardian:    {R: 42,       G: 24,         B: 12,     Rm: 111,     Gm: 65,    Bm: 23 },
+    apprentice:  {R: 0,         G: 131,         B: 204,   Rm: 30,      Gm: 70,     Bm: 104}, 
+    monk:        {R: 229,       G: 102,         B: 32,    Rm: 111,     Gm: 61,     Bm: 50 }, 
+    squire:      {R: 165,       G: 17,          B: 17,    Rm: 86,      Gm: 34,     Bm: 45 }, 
+    huntress:    {R: 0,         G: 127,         B: 57,    Rm: 33,      Gm: 69,     Bm: 57 }, 
+    ev:          {R: 122,       G: 29,          B: 185,   Rm: 73,      Gm: 38,     Bm: 98}, 
+    warden:      {R: 17,        G: 88,          B: 77,    Rm: 40,      Gm: 56,     Bm: 64 }, 
+    rogue:       {R: 86,        G: 4,           B: 54,    Rm: 62,      Gm: 30,     Bm: 56 }, 
+    summoner:    {R: 54,        G: 52,          B: 85,    Rm: 51,      Gm: 45,     Bm: 66 },
+    guardian:    {R: 252,       G: 151,         B: 0,     Rm: 107,     Gm: 69,     Bm: 33 },
 }
 
 HeroAbilities := {
@@ -147,7 +147,7 @@ CheckColorFuzzy(Varname, Coord, Table, Threshold := 16581375) {
             Ret := k
         }
     }
-    PixelValues[Varname] := {s: Ret, r: R, g: G, b: B, x: Coord.x, y: Coord.y, u: A_TickCount}
+    PixelValues[Varname] := {s: Ret, r: R, g: G, b: B, x: Coord.x, y: Coord.y, u: A_TickCount, c: Color}
 }
 
 WinGetAtCoords(coords) {
@@ -168,10 +168,15 @@ ShowDebug(){
         ShowGUI.Opt("+AlwaysOnTop -Caption +ToolWindow -DPIScale")
         ShowGUI.SetFont("s11")
         ShowGUI.BackColor := GUIColors.backcolor
-        for k, v in PixelValues
-            ShowGUI.Add("Text", GUIColors.information, k "  -  " v.s "      " v.r "  " v.g "  " v.b "      " Round(v.x) "  " Round(v.y) "      " v.u)
-        for k, v in State.OwnProps()
-            ShowGUI.Add("Text", v ? GUIColors.ON : GUIColors.OFF, k "  -  " v)
+        for k, v in PixelValues {
+            ShowGUI.Add("Text", "xm " GUIColors.information, k "  -  " v.s "      " v.r "  " v.g "  " v.b)
+            ShowGUI.Add("Progress", "W20 H20 x+m c" v.c " Background" GUIColors.backcolor , 100)
+            ShowGUI.Add("Text", "x+m " GUIColors.information, "(" Round(v.x) ", " Round(v.y) ")   |   " v.u)
+        }
+        for k, v in State.OwnProps() {
+            cc := v ? GUIColors.ON : GUIColors.OFF ; This apparently stops args in add from being evaluated, so it's here
+            ShowGUI.Add("Text", cc " xm h10", k "  -  " v)
+        }
         ShowGUI.Show("y" A_ScreenHeight " NoActivate") ; Show out of viewing area to get dimensions
         ShowGUI.GetPos(, , &GWidth, &GHeight) ; GetPos only works when GUI active
         ShowGUI.Move(WindowCoords.x, WindowCoords.y + WindowCoords.h*0.5 - GHeight*0.5)
@@ -264,9 +269,17 @@ Resize(w, h){ ; resizes win
     WinMove ,, 2*w - Wo, 2*h - Ho, DDAexe
 }
 
-G(){
-    if State.AutoG && A_TickCount > State.NextG {
-        if State.AutoG > 1 {
+G(ignorestate := False){
+    if (State.ToggleAutoG || ignorestate) && A_TickCount > State.NextG {
+        if State.ToggleAutoG == 1 {
+            State.NextG := A_TickCount + 1000
+            ControlSend("{Blind}{g down}", , DDAexe)
+            GUp(){
+                ControlSend("{Blind}{g up}", , DDAexe)
+            }
+            SetTimer(GUp,-420)
+        }
+        else{
             State.NextG := A_TickCount + 2200
             ControlSend("{Blind}{ctrl down}", , DDAexe)
             GDown(){
@@ -278,16 +291,6 @@ G(){
             }
             SetTimer(GfUp,-1780)
         }
-        else
-        {
-            State.NextG := A_TickCount + 1000
-            ControlSend("{Blind}{g down}", , DDAexe)
-            GUp(){
-                ControlSend("{Blind}{g up}", , DDAexe)
-            }
-            SetTimer(GUp,-420)
-        }
-        
     }
 }
 
@@ -371,12 +374,11 @@ ToggleState(statestr, text, terinary := 1) {
 ^DEL:: ExitApp
 ^!R:: Resize(960, 540)
 ^!T:: ToggleState("ToggleSummaryShutdown", "Summary Shutdown")
-^RButton:: AutoAttack()
 F7:: ToggleState("ToggleDebug", "Debug")
 F8:: ToggleState("ToggleRepair", "Auto Repair") 
 ^F8:: ToggleState("ToggleManaDump", "Auto Dump Mana")
-F9:: ToggleState("AutoG", "Auto G", 1)
-^F9:: ToggleState("AutoG", "Force G", 2)
+F9:: ToggleState("ToggleAutoG", "Auto G", 1)
+^F9:: ToggleState("ToggleAutoG", "Force G", 2)
 F10:: ToggleState("ToggleHeroBuff", "Auto Hero Buff") 
 F11:: ToggleState("ToggleTowerBuff", "Auto Tower Buff") 
 #HotIf WinActive(DDAexe)
@@ -447,19 +449,27 @@ Logic(){
     }
     phase := PixelValues["phase"].s
     hero := PixelValues["hero"].s
+    if State.PostMapover == 1
+        Show("Shutting down in " Round((State.NextShutdown - A_TickCount) / 1000, 2) " seconds : ", "information",  "")
+    if(phase == "mapover" || State.PostMapover == 1) {
+	    if State.ToggleSummaryShutdown {
+            G(ignoreState := true)
+	    	ShutdownTimer()
+	    }
+    }
     if hero == 0 {
         ShowDebug()
         return
     }
     if(phase == "loading") {
         ControlSend("{Blind}{Space}", , DDAexe)
-        if State.AutoG{
+        if State.ToggleAutoG{
             State.PostWarmup := true
         }
         return
     } else if(phase == "warmup") {
 		G()
-        if State.AutoG{
+        if State.ToggleAutoG{
             State.PostWarmup := true
         }
     } else if(phase == "build"){
@@ -471,8 +481,8 @@ Logic(){
                 }
             }
 			G()
-            M()
         }
+        M()
     }
     if(phase == "combat" || phase == "boss" || phase == "tavern" || phase == "blind") {
         State.PostMapover := 0
@@ -544,13 +554,5 @@ Logic(){
             Repair()
         }
     }
-    if(phase == "mapover" || State.PostMapover == 1) {
-	    if State.ToggleSummaryShutdown {
-            G()
-	    	ShutdownTimer()
-	    }
-    }
-    if State.PostMapover == 1
-        Show("Shutting down in " Round((State.NextShutdown - A_TickCount) / 1000, 2) " seconds : ", "information",  "")
     ShowDebug()
 }
