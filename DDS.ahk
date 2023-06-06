@@ -1,7 +1,9 @@
 #SingleInstance Force
 #Requires AutoHotkey v2.0-beta
 
-v := 230514 ;YYMMDD
+v := 230606 ;YYMMDD
+DDAexe := "ahk_exe DDS-Win64-Shipping.exe" ; You can use Window Spy to see the exe name
+DisableBlind := false ; Set to true if you want to disable blind mode (some games have issues with it)
 
 objindexget(obj,key) { 
     if obj.HasOwnProp(key) 
@@ -19,10 +21,9 @@ Object.Prototype.DefineProp("__Item", {Get: objindexget, Set: objindexset})
 CoordMode("Pixel", "Screen")
 CoordMode("Mouse", "Screen")
 
-DDAexe := "ahk_exe DDS-Win64-Shipping.exe" ; You can use Window Spy to see the exe name
-
 State := {  ToggleAutoG : 0,
             ToggleHeroBuff : false,
+            ToggleHeroSkill : false,
             ToggleTowerBuff : false,
             ToggleRepair : false,
             ToggleMouseRepair : false,
@@ -41,12 +42,55 @@ State := {  ToggleAutoG : 0,
             lastphase : "0"}
 
 Resolutions := {
-    3072x1920:  {Phase:{x:2962,y:113}, Hero:{x:65,y:149}, Toggle:{x:2600,y:1488}, Repair:{x:1560, y:945}, MouseRepairOffset:{x:-3, y:-3}},
-    3440x1440:  {Phase:{x:3332,y:88}, Hero:{x:41,y:113}, Toggle:{x:3034,y:1113}, Repair:{x:1730, y:702}, MouseRepairOffset:{x:-3, y:-3}}, 
-    2560x1440:  {Phase:{x:2469,y:81}, Hero:{x:48,y:113}, Toggle:{x:2192,y:1116}, Repair:{x:2196, y:687}, MouseRepairOffset:{x:-2, y:-2}},
-    1920x1080:  {Phase:{x:1853,y:63}, Hero:{x:35,y:83}, Toggle:{x:1645,y:837}, Repair:{x:973, y:531}, MouseRepairOffset:{x:-1, y:-1}},
-    1280x720:   {Phase:{x:1235,y:40}, Hero:{x:24,y:57}, Toggle:{x:1096,y:558}, Repair:{x:649, y:355}, MouseRepairOffset:{x:-1, y:-1}},
-    960x540:    {Phase:{x:927,y:30}, Hero:{x:18,y:43}, Toggle:{x:821,y:420}, Repair:{x:487, y:266}, MouseRepairOffset:{x:-1, y:-1}}
+    3072x1920:  {   Phase:{x:2962,y:113}, 
+                    Hero:{x:65,y:149}, 
+                    ToggleC:{x:2597,y:1491}, 
+                    ToggleF:{x:2749, y:1491}, 
+                    Repair:{x:1560, y:945}, 
+                    MouseRepairOffset:{x:-3, y:-3}
+                },
+    3440x1440:  {   Phase:{x:3332,y:88}, 
+                    Hero:{x:41,y:113}, 
+                    ToggleC:{x:3030,y:1117}, 
+                    ToggleF:{x:3145, y:1117}, 
+                    Repair:{x:1730, y:702}, 
+                    MouseRepairOffset:{x:-3, y:-3}
+                }, 
+    2560x1440:  {   Phase:{x:2469,y:81}, 
+                    Hero:{x:48,y:113}, 
+                    ToggleC:{x:2192,y:1116}, 
+                    ToggleF:{x:2307, y:1117}, 
+                    Repair:{x:23, y:687}, 
+                    MouseRepairOffset:{x:-2, y:-2}
+                },
+    1920x1080:  {   Phase:{x:1853,y:63}, 
+                    Hero:{x:35,y:83}, 
+                    ToggleC:{x:1644,y:838}, 
+                    ToggleF:{x:1729, y:838}, 
+                    Repair:{x:973, y:531}, 
+                    MouseRepairOffset:{x:-1, y:-1}
+                },
+    1360x768:   {   Phase:{x:1313,y:39}, 
+                    Hero:{x:26,y:61}, 
+                    ToggleC:{x:1164,y:595}, 
+                    ToggleF:{x:1224, y:596},
+                    Repair:{x:689, y:378}, 
+                    MouseRepairOffset:{x:-1, y:-1}
+                },
+    1280x720:   {   Phase:{x:1235,y:40}, 
+                    Hero:{x:24,y:57}, 
+                    ToggleC:{x:1096,y:558}, 
+                    ToggleF:{x:1153, y:558},
+                    Repair:{x:649, y:355}, 
+                    MouseRepairOffset:{x:-1, y:-1}
+                },
+    960x540:    {   Phase:{x:927,y:30}, 
+                    Hero:{x:18,y:43}, 
+                    ToggleC:{x:822,y:419}, 
+                    ToggleF:{x:842,y:419}, 
+                    Repair:{x:487, y:266}, 
+                    MouseRepairOffset:{x:-1, y:-1}
+                }
 }
 
 PhaseColors := {
@@ -61,8 +105,9 @@ PhaseColors := {
 }
 
 ToggleColors := {
-    on:       {R: 0,        G: 122,         B: 122,     Rm: 39,     Gm: 72,     Bm: 92 }, 
-    off:      {R: 7,        G: 5,           B: 16,      Rm: 42,     Gm: 45,     Bm: 64 }
+    on1:       {R: 0,        G: 240,         B: 240,     Rm: 15,     Gm: 100,     Bm: 130 }, 
+    on2:       {R: 0,        G: 220,         B: 220,     Rm: 25,     Gm: 65,     Bm: 98  }, 
+    0:        {R: 13,        G: 136,           B: 124,      Rm: 23,     Gm: 78,     Bm: 89 },
 }
 
 RepairColors := {
@@ -83,15 +128,40 @@ HeroColors := {
 }
 
 HeroAbilities := {
-    apprentice: {A: "LEFT",                                                     C: {Type: "Tower", AnimT: 1500, Recast: "M2Toggle", Cooldown: 5500, M2AnimT: 1500, M2Recast: 7000}}, 
-    monk:       {A: "RIGHT",    F: {Type: "Tower", AnimT: 500, Recast: 19000},  C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}}, 
-    squire:     {A: "LEFT",                                                     C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}}, 
-    huntress:   {A: "LEFT",                                                     C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}}, 
-    ev:         {A: "LEFT"},    
-    warden:     {A: "LEFT",                                                     C: {Type: "Both", AnimT: 1000, Recast: "Toggle"}}, 
-    rogue:      {A: "LEFT",     TOWER: {Type: "Hero", Numbers: [4, 5], Delay: 15000}},                                                    
-    summoner:   {A: "Repair",   F: {Type: "Tower", AnimT: 2000, Recast: 5100},  C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}},
-    guardian:   {A: "LEFT",                                                     C: {Type: "Hero", AnimT: 500, Recast: "Toggle"}}
+    apprentice: {   A: "LEFT",
+                    C: {Type: "TowerBuff", AnimT: 1500, Recast: "M2ToggleC", Cooldown: 5500, M2AnimT: 1500, M2Recast: 7000},
+                    F: {Type: "HeroSkill", AnimT: 1250, Recast: "ToggleF"}
+                }, 
+    monk:       {   A: "RIGHT",
+                    F: {Type: "TowerBuff", AnimT: 500, Recast: "TimerToggleF", Cooldown: 19000},
+                    C: {Type: "HeroBuff", AnimT: 500, Recast: "ToggleC"}
+                }, 
+    squire:     {   A: "LEFT",
+                    F: {Type: "HeroSkill", AnimT: 1000, Recast: "ToggleF"},
+                    C: {Type: "HeroBuff", AnimT: 500, Recast: "ToggleC"}
+                },
+    huntress:   {   A: "LEFT",
+                    F: {Type: "HeroSkill", AnimT: 1000, Recast: "ToggleF"},     
+                    C: {Type: "HeroBuff", AnimT: 500, Recast: "ToggleC"}
+                }, 
+    ev:         {   A: "LEFT",
+                    F: {Type: "HeroSkill", AnimT: 1000, Recast: "ToggleF"},
+                },    
+    warden:     {   A: "LEFT",
+                    C: {Type: "Both", AnimT: 1000, Recast: "ToggleC"}
+                }, 
+    rogue:      {   A: "LEFT",     
+                    TOWER: {Type: "HeroSkill", Numbers: [4, 5], Delay: 15000}
+                },
+    summoner:   {   A: "Repair",   
+                    F: {Type: "TowerBuff", AnimT: 2000, Recast: "TimerToggleF", Cooldown: 5100},
+                    C: {Type: "HeroBuff", AnimT: 500, Recast: "ToggleC"}
+                },
+    guardian:   {   A: "LEFT",
+                    F: {Type: "HeroSkill", AnimT: 1000, Recast: "ToggleF"},
+                    C: {Type: "HeroBuff", AnimT: 500, Recast: "ToggleC"},
+                    
+                }
 }
 
 global WindowCoords := {init: 0}
@@ -147,12 +217,16 @@ CheckColorFuzzy(Varname, Coord, Table, Threshold := 16581375) {
             Ret := k
         }
     }
-    PixelValues[Varname] := {s: Ret, r: R, g: G, b: B, x: Coord.x, y: Coord.y, u: A_TickCount, c: Color}
+    PixelValues[Varname] := {s: Ret, r: R, g: G, b: B, x: Coord.x, y: Coord.y, u: A_TickCount, c: Color, e: "0"}
 }
 
 WinGetAtCoords(coords) {
-    WinID := DllCall("WindowFromPoint", "UInt64", (coords.x & 0xFFFFFFFF) | (coords.y << 32), "Ptr")
-    return "ahk_exe " WinGetProcessName(WinID)
+    if DisableBlind { 
+        return DDAexe
+    }
+
+    ParentWinID := DllCall("WindowFromPoint", "UInt64", (coords.x & 0xFFFFFFFF) | (coords.y << 32), "Ptr")
+    return "ahk_exe " WinGetProcessName(ParentWinID)
 }
 
 GUIColors := {
@@ -172,6 +246,9 @@ ShowDebug(){
             ShowGUI.Add("Text", "xm " GUIColors.information, k "  -  " v.s "      " v.r "  " v.g "  " v.b)
             ShowGUI.Add("Progress", "W20 H20 x+m c" v.c " Background" GUIColors.backcolor , 100)
             ShowGUI.Add("Text", "x+m " GUIColors.information, "(" Round(v.x) ", " Round(v.y) ")   |   " v.u)
+            if v.e {
+                ShowGUI.Add("Text", "x+m " GUIColors.information, "- " v.e)
+            }
         }
         for k, v in State.OwnProps() {
             cc := v ? GUIColors.ON : GUIColors.OFF ; This apparently stops args in add from being evaluated, so it's here
@@ -246,11 +323,12 @@ ShutdownTimer(){ ; 0 = not started, 1 = started, 2 = cancelled
         ShutdownGUI.GetPos(, , &GWidth, &GHeight) ; GetPos only works when GUI active
         ShutdownGUI.Move(WindowCoords.x + WindowCoords.w - GWidth, WindowCoords.y + WindowCoords.h*0.5 - GHeight*0.5)
         State.NextShutdown := A_TickCount + 60000
+        Screenshot()
+        SetTimer(Screenshot, -1000)
         State.PostMapover := 1
     }
 
     if (A_TickCount > State.NextShutdown && State.PostMapover == 1) {
-        ControlSend("{Blind}{F12}", , DDAexe)
         Shutdown 1
     }
 
@@ -259,8 +337,19 @@ ShutdownTimer(){ ; 0 = not started, 1 = started, 2 = cancelled
         ShutdownGUI.Destroy()
     }
 
-    
+    Screenshot(*){
+        ControlSend("{Blind}{F12}", , DDAexe)
+    }
+}
 
+UpdatePixelValues(key, windowOffset, blindString, colors, threshold) {
+    global PixelValues
+
+    PixelValues[key].e := WinGetAtCoords(windowOffset)
+    if PixelValues[key].s != blindString {
+        Show("Blind " key " : ", "ON", "")
+        PixelValues[key].s := blindString
+    }
 }
 
 Resize(w, h){ ; resizes win
@@ -344,13 +433,6 @@ Repair(){
     }
     else if(PixelValues["wrench"].s == "greenwrench"){
         ControlClick(,DDAexe, , "LEFT")
-        SetTimer(Cleanup,-200) ; 200ms max repair time (has to be less than timer for Repair())
-
-        Cleanup(){
-            if(PixelValues["wrench"].s != 0){
-                ControlClick(,DDAexe, , "RIGHT") 
-            }
-        }
     }
 }
 
@@ -372,19 +454,21 @@ ToggleState(statestr, text, terinary := 1) {
 }
 
 ^DEL:: ExitApp
-^!R:: Resize(960, 540)
+^!R:: Resize(1360, 768)
 ^!T:: ToggleState("ToggleSummaryShutdown", "Summary Shutdown")
 F7:: ToggleState("ToggleDebug", "Debug")
 F8:: ToggleState("ToggleRepair", "Auto Repair") 
 ^F8:: ToggleState("ToggleManaDump", "Auto Dump Mana")
 F9:: ToggleState("ToggleAutoG", "Auto G", 1)
 ^F9:: ToggleState("ToggleAutoG", "Force G", 2)
-F10:: ToggleState("ToggleHeroBuff", "Auto Hero Buff") 
+F10:: ToggleState("ToggleHeroBuff", "Auto Hero Buff")
+^F10:: ToggleState("ToggleHeroSkill", "Auto Hero Skill") 
 F11:: ToggleState("ToggleTowerBuff", "Auto Tower Buff") 
 #HotIf WinActive(DDAexe)
 ^RButton:: AutoAttack()
 
 Update()
+
 
 SetTimer(Scan, 250)
 SetTimer(Logic, 50)
@@ -393,50 +477,61 @@ global initialscan := 0
 global phasescan := 0
 global heroscan := 0
 global togglescan := 0
+global repairscan := 0
 
 
-Scan(){
+Scan() {
     GetWindowCoords()
-	if WindowCoords.init == 0
-		return
-    if !(WinGetAtCoords(WindowOffset(Resolutions[Res].Phase)) == DDAexe){
-        if initialscan == 1{
-            if PixelValues["phase"].s != "blind"{
-                Show("Blind Phase : ", "ON", "")
-                PixelValues["phase"].s := "blind"
-            }
+    if WindowCoords.init == 0 {
+        return
+    }
+
+    if !(WinGetAtCoords(WindowOffset(Resolutions[Res].Phase)) == DDAexe) {
+        if initialscan == 1 {
+            UpdatePixelValues("phase", WindowOffset(Resolutions[Res].Phase), "blind", PhaseColors, 600)
         }
     } else {
-        CheckColorFuzzy("phase",WindowOffset(Resolutions[Res].Phase), PhaseColors, 600) 
+        CheckColorFuzzy("phase", WindowOffset(Resolutions[Res].Phase), PhaseColors, 600)
         State.lastphase := PixelValues["phase"].s
         global phasescan := 1
     }
-    if !(WinGetAtCoords(WindowOffset(Resolutions[Res].Toggle)) == DDAexe){
-        if initialscan == 1{
-            if PixelValues["toggle"].s != "blind"{
-                Show("Blind Toggle : ", "ON", "")
-                PixelValues["toggle"].s := "blind"
-            }
+
+    if !(WinGetAtCoords(WindowOffset(Resolutions[Res].ToggleC)) == DDAexe) {
+        if initialscan == 1 {
+            UpdatePixelValues("togglec", WindowOffset(Resolutions[Res].ToggleC), "blind", ToggleColors, 1500)
         }
     } else {
-        CheckColorFuzzy("toggle",WindowOffset(Resolutions[Res].Toggle), ToggleColors)
+        CheckColorFuzzy("togglec", WindowOffset(Resolutions[Res].ToggleC), ToggleColors, 1500)
         global togglescan := 1
     }
-    if (WinGetAtCoords(WindowOffset(Resolutions[Res].Repair)) == DDAexe){
-        UpdateWrench()
-    }
-    if !(WinGetAtCoords(WindowOffset(Resolutions[Res].Hero)) == DDAexe){
-        return
+
+    if !(WinGetAtCoords(WindowOffset(Resolutions[Res].ToggleF)) == DDAexe) {
+        if initialscan == 1 {
+            UpdatePixelValues("togglef", WindowOffset(Resolutions[Res].ToggleF), "blind", ToggleColors, 1500)
+        }
     } else {
-        if phasescan{
-            if (PixelValues["phase"].s != "combat" && PixelValues["phase"].s != "boss") || 
-                (PixelValues["phase"].s == "combat" && State.lastphase != "combat") || 
-                (PixelValues["phase"].s == "boss" && (State.lastphase != "combat" || State.lastphase != "boss")) {
-                    CheckColorFuzzy("hero",WindowOffset(Resolutions[Res].Hero), HeroColors, 300)
-                    global heroscan := 1
-                }
+        CheckColorFuzzy("togglef", WindowOffset(Resolutions[Res].ToggleF), ToggleColors, 1500)
+        global togglescan := 1
+    }
+
+    if (WinGetAtCoords(WindowOffset(Resolutions[Res].Repair)) == DDAexe) {
+        UpdateWrench()
+        global repairscan := 1
+    } else {
+        if repairscan {
+            PixelValues["wrench"].e := WinGetAtCoords(WindowOffset(Resolutions[Res].Repair))
         }
     }
+
+    if !(WinGetAtCoords(WindowOffset(Resolutions[Res].Hero)) == DDAexe) {
+        if heroscan {
+            PixelValues["hero"].e := WinGetAtCoords(WindowOffset(Resolutions[Res].Hero))
+        }
+    } else {
+        CheckColorFuzzy("hero", WindowOffset(Resolutions[Res].Hero), HeroColors, 600)
+        global heroscan := 1
+    }
+
     if heroscan && phasescan && togglescan {
         global initialscan := 1
     }
@@ -475,7 +570,7 @@ Logic(){
     } else if(phase == "build"){
         if State.PostWarmup == false {
             if HeroAbilities[hero]["TOWER"] {
-                if HeroAbilities[hero]["TOWER"].Type == "Hero" && State.ToggleHeroBuff { ; Others are not currently added
+                if HeroAbilities[hero]["TOWER"].Type == "HeroSkill" && State.ToggleHeroBuff { ; Others are not currently added
                     CleanWrench()
                     PlaceTowers(hero)
                 }
@@ -493,17 +588,18 @@ Logic(){
             G()
         }
         if HeroAbilities[hero]["C"] {
-            if (HeroAbilities[hero].C.Type == "Tower" && State.ToggleTowerBuff) || 
-			   (HeroAbilities[hero].C.Type == "Hero" && State.ToggleHeroBuff) || 
+            if (HeroAbilities[hero].C.Type == "TowerBuff" && State.ToggleTowerBuff) || 
+			   (HeroAbilities[hero].C.Type == "HeroBuff" && State.ToggleHeroBuff) ||
+               (HeroAbilities[hero].C.Type == "HeroSkill" && State.ToggleHeroSkill) || 
 			   (HeroAbilities[hero].C.Type == "Both" && (State.ToggleHeroBuff || State.ToggleTowerBuff)) {
-                if (HeroAbilities[hero].C.Recast == "Toggle" || HeroAbilities[hero].C.Recast == "M2Toggle"){
-                    if PixelValues["toggle"].s != "blind" {
-                        if PixelValues["toggle"].s == "off" && A_TickCount > State.NextInput {
+                if (HeroAbilities[hero].C.Recast == "ToggleC" || HeroAbilities[hero].C.Recast == "M2ToggleC"){
+                    if PixelValues["togglec"].s != "blind" {
+                        if PixelValues["togglec"].s == 0 && A_TickCount > State.NextInput {
                             CleanWrench()
                             ControlSend("{Blind}{c}", , DDAexe)
                             State.NextInput := A_TickCount + HeroAbilities[hero].C.AnimT
                         }
-                        if PixelValues["toggle"].s == "on" && HeroAbilities[hero].C.Recast == "M2Toggle" && A_TickCount > State.NextC && A_TickCount > State.NextInput{
+                        if PixelValues["togglec"].s != 0 && HeroAbilities[hero].C.Recast == "M2ToggleC" && A_TickCount > State.NextC && A_TickCount > State.NextInput{
                             CleanWrench()
                             M2()
                             SetTimer(DeBoost, - HeroAbilities[hero].C.M2AnimT)
@@ -523,7 +619,7 @@ Logic(){
                         }
                     }
                     else{
-                        if HeroAbilities[hero].C.Recast == "M2Toggle" && A_TickCount > State.NextC && A_TickCount > State.NextInput {
+                        if HeroAbilities[hero].C.Recast == "M2ToggleC" && A_TickCount > State.NextC && A_TickCount > State.NextInput {
                             ControlSend("{Blind}{c}", , DDAexe)
                             SetTimer(M2, - HeroAbilities[hero].C.AnimT)
                             SetTimer(DeBoost, - (HeroAbilities[hero].C.AnimT + HeroAbilities[hero].C.M2AnimT))
@@ -536,21 +632,39 @@ Logic(){
             }
         }
         if HeroAbilities[hero]["F"] {
-			if (HeroAbilities[hero].F.Type == "Tower" && State.ToggleTowerBuff) || 
-			   (HeroAbilities[hero].F.Type == "Hero" && State.ToggleHeroBuff) || 
+			if (HeroAbilities[hero].F.Type == "TowerBuff" && State.ToggleTowerBuff) || 
+			   (HeroAbilities[hero].F.Type == "HeroBuff" && State.ToggleHeroBuff) ||
+               (HeroAbilities[hero].F.Type == "HeroSkill" && State.ToggleHeroSkill) ||  
 			   (HeroAbilities[hero].F.Type == "Both" && (State.ToggleHeroBuff || State.ToggleTowerBuff)) {
-				if (HeroAbilities[hero].F.Recast == "Toggle" || HeroAbilities[hero].F.Recast == "M2Toggle"){
-					; These don't currently exist ingame
+				if (HeroAbilities[hero].F.Recast == "ToggleF"){
+					if PixelValues["togglef"].s != "blind" {
+                        if PixelValues["togglef"].s == 0 && A_TickCount > State.NextInput {
+                            CleanWrench()
+                            ControlSend("{Blind}{f}", , DDAexe)
+                            State.NextInput := A_TickCount + HeroAbilities[hero].F.AnimT
+                        }
+                    }
 				}
-				else if A_TickCount > State.NextF && A_TickCount > State.NextInput {
-                    CleanWrench()
-					ControlSend("{Blind}{f}", , DDAexe)
-					State.NextF := A_TickCount + HeroAbilities[hero].F.AnimT + HeroAbilities[hero].F.Recast
-					State.NextInput := A_TickCount + HeroAbilities[hero].F.AnimT
-				}
+                if (HeroAbilities[hero].F.Recast == "TimerToggleF") {
+                    if PixelValues["togglef"].s != "blind" {
+                        if PixelValues["togglef"].s == 0 && A_TickCount > State.NextInput {
+                            CleanWrench()
+                            ControlSend("{Blind}{f}", , DDAexe)
+                            State.NextInput := A_TickCount + HeroAbilities[hero].F.AnimT
+                        }
+                    }
+                    else {
+                        if A_TickCount > State.NextF && A_TickCount > State.NextInput {
+                            CleanWrench()
+                            ControlSend("{Blind}{f}", , DDAexe)
+                            State.NextF := A_TickCount + HeroAbilities[hero].F.AnimT + HeroAbilities[hero].F.Cooldown
+                            State.NextInput := A_TickCount + HeroAbilities[hero].F.AnimT
+                        }
+                    }
+                }
 			}
         }
-        if State.ToggleRepair && A_Tickcount > State.NextInput + 300 {
+        if State.ToggleRepair && A_Tickcount > State.NextInput + 50 {
             Repair()
         }
     }

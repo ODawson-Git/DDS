@@ -1,3 +1,14 @@
+230606:
+- Added colour detection for "F" Skill (Ctrl+F10)
+-   Apprentice - Mana Bomb (w/o rune)
+-   Squire - Circular Slice
+-   Huntress - Pheonix Shot
+-   EV - Decoy
+-   Guardian - Divine Judgement
+- Adjusted Autorepair
+- Added support for 1360x768
+- Summary shutdown takes 2 screenshots to core destroyed message|
+
 230514:
 - Fixed DumpMana not dumping after warmup
 - Fixed SummaryShutdown being unreliable
