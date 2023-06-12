@@ -1,7 +1,7 @@
 #SingleInstance Force
 #Requires AutoHotkey v2.0-beta
 
-v := 230612 ;YYMMDD
+v := 230613 ;YYMMDD
 DDAexe := "ahk_exe DDS-Win64-Shipping.exe" ; You can use Window Spy to see the exe name
 DisableBlind := false ; Set to true if you want to disable blind mode (some games have issues with it)
 
@@ -645,21 +645,12 @@ Logic(){
                         }
                     }
 				}
-                if (HeroAbilities[hero].F.Recast == "TimerToggleF") {
-                    if PixelValues["togglef"].s != "blind" {
-                        if PixelValues["togglef"].s == 0 && A_TickCount > State.NextInput {
-                            CleanWrench()
-                            ControlSend("{Blind}{f}", , DDAexe)
-                            State.NextInput := A_TickCount + HeroAbilities[hero].F.AnimT
-                        }
-                    }
-                    else {
-                        if A_TickCount > State.NextF && A_TickCount > State.NextInput {
-                            CleanWrench()
-                            ControlSend("{Blind}{f}", , DDAexe)
-                            State.NextF := A_TickCount + HeroAbilities[hero].F.AnimT + HeroAbilities[hero].F.Cooldown
-                            State.NextInput := A_TickCount + HeroAbilities[hero].F.AnimT
-                        }
+                else if (HeroAbilities[hero].F.Recast == "TimerToggleF") {
+                    if A_TickCount > State.NextF && A_TickCount > State.NextInput {
+                        CleanWrench()
+                        ControlSend("{Blind}{f}", , DDAexe)
+                        State.NextF := A_TickCount + HeroAbilities[hero].F.AnimT + HeroAbilities[hero].F.Cooldown
+                        State.NextInput := A_TickCount + HeroAbilities[hero].F.AnimT
                     }
                 }
 			}
