@@ -1,7 +1,7 @@
 #SingleInstance Force
 #Requires AutoHotkey v2.0-beta
 
-v := 230606 ;YYMMDD
+v := 230612 ;YYMMDD
 DDAexe := "ahk_exe DDS-Win64-Shipping.exe" ; You can use Window Spy to see the exe name
 DisableBlind := false ; Set to true if you want to disable blind mode (some games have issues with it)
 
@@ -72,7 +72,7 @@ Resolutions := {
                 },
     1360x768:   {   Phase:{x:1313,y:39}, 
                     Hero:{x:26,y:61}, 
-                    ToggleC:{x:1164,y:595}, 
+                    ToggleC:{x:1163,y:596}, 
                     ToggleF:{x:1224, y:596},
                     Repair:{x:689, y:378}, 
                     MouseRepairOffset:{x:-1, y:-1}
@@ -324,7 +324,7 @@ ShutdownTimer(){ ; 0 = not started, 1 = started, 2 = cancelled
         ShutdownGUI.Move(WindowCoords.x + WindowCoords.w - GWidth, WindowCoords.y + WindowCoords.h*0.5 - GHeight*0.5)
         State.NextShutdown := A_TickCount + 60000
         Screenshot()
-        SetTimer(Screenshot, -1000)
+        SetTimer(Screenshot, -5000)
         State.PostMapover := 1
     }
 
@@ -454,7 +454,7 @@ ToggleState(statestr, text, terinary := 1) {
 }
 
 ^DEL:: ExitApp
-^!R:: Resize(1360, 768)
+^!R:: Resize(960, 540)
 ^!T:: ToggleState("ToggleSummaryShutdown", "Summary Shutdown")
 F7:: ToggleState("ToggleDebug", "Debug")
 F8:: ToggleState("ToggleRepair", "Auto Repair") 
