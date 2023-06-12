@@ -2,6 +2,12 @@
 #Requires AutoHotkey v1.1.33+
 
 ScanFolder := "C:\Program Files (x86)\Steam\userdata\90709843\760\remote\1101190\screenshots"
+WEBHOOK := ""
+
+if (WEBHOOK == ""){
+    Msgbox No WEBHOOK added
+    ExitApp
+}
 
 FileList(Directory){
     List := []
@@ -18,7 +24,7 @@ SendToDiscord(File){
     objParam := {file: [File], content: A_Now}
     CreateFormData(PostData, hdr_ContentType, objParam)
     HTTP := ComObjCreate("WinHTTP.WinHTTPRequest.5.1")
-    HTTP.Open("POST", "https://discord.com/api/webhooks/1114239278478786602/llBbw2oOxHb8yIMqCS33jkc983beOJHJwG5dSDDB_bcSmYl3fZn-X6DOIDrwgRWq2XgH", true)
+    HTTP.Open("POST", WEBHOOK, true)
     HTTP.SetRequestHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko")
     HTTP.SetRequestHeader("Content-Type", hdr_ContentType)
     HTTP.SetRequestHeader("Pragma", "no-cache")
