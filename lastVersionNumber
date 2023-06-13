@@ -1,3 +1,7 @@
+230614:
+- Fixed errors with colours on 2560x1440
+- Added some error handling when getting process handles|
+
 230613:
 - Fixed auto-repair not working in conjuction
 with timed abilities|

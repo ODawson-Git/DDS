@@ -1,7 +1,7 @@
 #SingleInstance Force
 #Requires AutoHotkey v2.0-beta
 
-v := 230613 ;YYMMDD
+v := 230614 ;YYMMDD
 DDAexe := "ahk_exe DDS-Win64-Shipping.exe" ; You can use Window Spy to see the exe name
 DisableBlind := false ; Set to true if you want to disable blind mode (some games have issues with it)
 
@@ -56,10 +56,10 @@ Resolutions := {
                     Repair:{x:1730, y:702}, 
                     MouseRepairOffset:{x:-3, y:-3}
                 }, 
-    2560x1440:  {   Phase:{x:2469,y:81}, 
+    2560x1440:  {   Phase:{x:2475,y:74}, 
                     Hero:{x:48,y:113}, 
-                    ToggleC:{x:2192,y:1116}, 
-                    ToggleF:{x:2307, y:1117}, 
+                    ToggleC:{x:2191,y:1117}, 
+                    ToggleF:{x:2306, y:1117}, 
                     Repair:{x:23, y:687}, 
                     MouseRepairOffset:{x:-2, y:-2}
                 },
@@ -225,8 +225,13 @@ WinGetAtCoords(coords) {
         return DDAexe
     }
 
-    ParentWinID := DllCall("WindowFromPoint", "UInt64", (coords.x & 0xFFFFFFFF) | (coords.y << 32), "Ptr")
-    return "ahk_exe " WinGetProcessName(ParentWinID)
+    try {
+        ParentWinID := DllCall("WindowFromPoint", "UInt64", (coords.x & 0xFFFFFFFF) | (coords.y << 32), "Ptr")
+        Name := WinGetProcessName(ParentWinID)
+    } catch {
+        return "ahk_exe ERROR GETTING HANDLE"
+    }
+    return "ahk_exe " Name
 }
 
 GUIColors := {
