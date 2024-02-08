@@ -1,7 +1,7 @@
 #SingleInstance Force
 #Requires AutoHotkey v2.0-beta
 
-v := 230614 ;YYMMDD
+v := 240208 ;YYMMDD
 DDAexe := "ahk_exe DDS-Win64-Shipping.exe" ; You can use Window Spy to see the exe name
 DisableBlind := false ; Set to true if you want to disable blind mode (some games have issues with it)
 
@@ -22,6 +22,7 @@ CoordMode("Pixel", "Screen")
 CoordMode("Mouse", "Screen")
 
 State := {  ToggleAutoG : 0,
+            ToggleAutoAttack : false,
             ToggleHeroBuff : false,
             ToggleHeroSkill : false,
             ToggleTowerBuff : false,
@@ -64,9 +65,9 @@ Resolutions := {
                     MouseRepairOffset:{x:-2, y:-2}
                 },
     1920x1080:  {   Phase:{x:1853,y:63}, 
-                    Hero:{x:35,y:83}, 
-                    ToggleC:{x:1644,y:838}, 
-                    ToggleF:{x:1729, y:838}, 
+                    Hero:{x:36,y:90}, 
+                    ToggleC:{x:1644,y:901}, 
+                    ToggleF:{x:1729, y:901}, 
                     Repair:{x:973, y:531}, 
                     MouseRepairOffset:{x:-1, y:-1}
                 },
@@ -98,7 +99,7 @@ PhaseColors := {
     warmup:     {R: 162,        G: 117,         B: 0,       Rm: 153,         Gm: 112,        Bm: 16  }, 
     build:      {R: 75,         G: 124,         B: 0,       Rm: 57 ,         Gm: 85,        Bm: 16  }, 
     combat:     {R: 127,        G: 25,          B: 39,      Rm: 90 ,         Gm: 20,        Bm: 42  }, 
-    tavern:     {R: 165,        G: 89,          B: 0,       Rm: 115,         Gm: 62,        Bm: 16  }, 
+    tavern:     {R: 188,        G: 101,         B: 0,       Rm: 115,         Gm: 62,        Bm: 16  }, 
     boss:       {R: 133,        G: 0,           B: 115,     Rm: 112  ,       Gm: 24,        Bm: 109   },
     loading:    {R: 154,        G: 36,          B: 0,       Rm: 154,         Gm: 36,        Bm: 0   },
     inventory:  {R: 106,        G: 106,         B: 106,     Rm: 106,         Gm: 106,       Bm: 106 }
@@ -150,7 +151,8 @@ HeroAbilities := {
     warden:     {   A: "LEFT",
                     C: {Type: "Both", AnimT: 1000, Recast: "ToggleC"}
                 }, 
-    rogue:      {   A: "LEFT",     
+    rogue:      {   A: "BOTHLR", ; Send Right then Left
+                    ATOWER: {Type: "AutoAttack", Numbers: [1, 2, 3], Delay: 0},
                     TOWER: {Type: "HeroSkill", Numbers: [4, 5], Delay: 15000}
                 },
     summoner:   {   A: "Repair",   
@@ -433,23 +435,51 @@ UpdateWrench(){
 }
 
 Repair(){
-    if(PixelValues["wrench"].s == 0){
-        ControlSend("{Blind}{r}", , DDAexe)
-    }
-    else if(PixelValues["wrench"].s == "greenwrench"){
-        ControlClick(,DDAexe, , "LEFT")
+    if State.ToggleRepair {
+        if(PixelValues["wrench"].s == 0){
+            ControlSend("{Blind}{r}", , DDAexe)
+        }
+        else if(PixelValues["wrench"].s == "greenwrench"){
+            ControlClick(,DDAexe, , "LEFT")
+        }
     }
 }
 
-AutoAttack(){
-    hero := PixelValues["hero"].s
+ToggleAutoAttack(){
     if HeroAbilities[hero]["A"]{
         if HeroAbilities[hero]["A"] == "Repair"{
             ToggleState("ToggleMouseRepair", "Mouse Repair")
         }else{
-            Show("Auto Attack : ", "ON", "")
-            ControlClick(,DDAexe, , HeroAbilities[hero]["A"], , "D")
+            ToggleState("ToggleAutoAttack", "Auto Attack")
         }
+    }
+}
+
+AutoAttack(){
+    if HeroAbilities[hero]["A"] != "Repair" && State.ToggleAutoAttack{
+        if HeroAbilities[hero]["A"] == "BOTHLR"{ ; Works best for Melee weapons with an attack speed of a multiple of 50(ms)
+            ControlClick(,DDAexe, , "LEFT")
+            SetTimer(RMBD, -5)
+            SetTimer(RMBU, -49)
+        } else {
+            ControlClick(,DDAexe, , HeroAbilities[hero]["A"],, "D")
+        }
+        if HeroAbilities[hero]["ATOWER"]{
+            for i, towernumber in HeroAbilities[hero]["ATOWER"].Numbers
+                SetTimer(SendTower.Bind(towernumber), -10*i)
+        }
+    }
+
+    RMBD(){
+        ControlClick(,DDAexe, , "RIGHT",, "D")
+    }
+
+    RMBU(){
+        ControlClick(,DDAexe, , "RIGHT",, "U")
+    }
+
+    SendTower(tower){
+        ControlSend("{Blind}{" tower "}", , DDAexe)
     }
 }
 
@@ -470,7 +500,7 @@ F10:: ToggleState("ToggleHeroBuff", "Auto Hero Buff")
 ^F10:: ToggleState("ToggleHeroSkill", "Auto Hero Skill") 
 F11:: ToggleState("ToggleTowerBuff", "Auto Tower Buff") 
 #HotIf WinActive(DDAexe)
-^RButton:: AutoAttack()
+^RButton:: ToggleAutoAttack()
 
 Update()
 
@@ -533,7 +563,7 @@ Scan() {
             PixelValues["hero"].e := WinGetAtCoords(WindowOffset(Resolutions[Res].Hero))
         }
     } else {
-        CheckColorFuzzy("hero", WindowOffset(Resolutions[Res].Hero), HeroColors, 600)
+        CheckColorFuzzy("hero", WindowOffset(Resolutions[Res].Hero), HeroColors)
         global heroscan := 1
     }
 
@@ -547,8 +577,8 @@ Logic(){
         ShowDebug()
 		return
     }
-    phase := PixelValues["phase"].s
-    hero := PixelValues["hero"].s
+    global phase := PixelValues["phase"].s
+    global hero := PixelValues["hero"].s
     if State.PostMapover == 1
         Show("Shutting down in " Round((State.NextShutdown - A_TickCount) / 1000, 2) " seconds : ", "information",  "")
     if(phase == "mapover" || State.PostMapover == 1) {
@@ -556,10 +586,6 @@ Logic(){
             G(ignoreState := true)
 	    	ShutdownTimer()
 	    }
-    }
-    if hero == 0 {
-        ShowDebug()
-        return
     }
     if(phase == "loading") {
         ControlSend("{Blind}{Space}", , DDAexe)
@@ -660,8 +686,9 @@ Logic(){
                 }
 			}
         }
-        if State.ToggleRepair && A_Tickcount > State.NextInput + 50 {
+        if A_Tickcount > State.NextInput + 50 {
             Repair()
+            AutoAttack()
         }
     }
     ShowDebug()
