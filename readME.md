@@ -49,7 +49,7 @@ The script reads colors on screen to know current game phase and hero being play
 | **Squire**            	| Blood Boil              	| Circular Slice              	| -                       	| LMB                        	|
 | **Huntress**          	| Adrenaline Rush         	| Phoenix Shot                	| -                       	| LMB                        	|
 | **EV**                	| -                       	| Decoy                       	| -                       	| LMB                        	|
-| **Rouge**             	| Umbral Form and Carnage 	| -                           	| -                       	| RMB                        	|
+| **Rouge**             	| Umbral Form and Carnage 	| -                           	| -                       	| Attack Spam                	|
 | **Warden**            	| Wrath                   	| -                           	| Wrath                   	| LMB                        	|
 | **Summoner**          	| Pet Boost               	| -                           	| Flash Heal              	| Repair Mouse Mode          	|
 | **Guardian**          	| Divine Protection       	| Divine Judgement            	| -                       	| LMB                        	|
