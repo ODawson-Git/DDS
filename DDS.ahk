@@ -58,9 +58,9 @@ Resolutions := {
                     MouseRepairOffset:{x:-3, y:-3}
                 }, 
     2560x1440:  {   Phase:{x:2475,y:74}, 
-                    Hero:{x:48,y:113}, 
-                    ToggleC:{x:2191,y:1117}, 
-                    ToggleF:{x:2306, y:1117}, 
+                    Hero:{x:48,y:120}, 
+                    ToggleC:{x:2191,y:1201}, 
+                    ToggleF:{x:2306, y:1201}, 
                     Repair:{x:23, y:687}, 
                     MouseRepairOffset:{x:-2, y:-2}
                 },
